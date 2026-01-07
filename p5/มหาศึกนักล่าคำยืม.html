@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loanword Expedition - มหาศึกนักล่าคำยืม</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
+        .track-bg { background-image: linear-gradient(to right, #1e293b 1px, transparent 1px); background-size: 10% 100%; }
+        .finish-line { background: repeating-conic-gradient(#fff 0 90deg, #000 0 180deg) 0 0/20px 20px; }
+        .team-pawn { transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .glow-blue { shadow-lg: 0 0 20px rgba(59, 130, 246, 0.5); }
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .bouncing { animation: bounce-slow 2s infinite; }
+    </style>
+</head>
+<body class="p-4">
+
+<div id="game-app" class="max-w-7xl mx-auto flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-center bg-slate-900 p-6 rounded-3xl border-b-4 border-blue-600 shadow-2xl mb-8">
+        <div class="mb-4 md:mb-0">
+            <h1 class="text-3xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent italic">LOANWORD EXPEDITION</h1>
+            <p class="text-slate-400 text-sm">การผจญภัยในดินแดนคำยืมภาษาต่างประเทศ</p>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <div id="main-timer" class="text-5xl font-mono text-emerald-400 bg-black/50 px-6 py-2 rounded-2xl border border-emerald-500/30">60:00</div>
+            <div class="flex flex-col gap-2">
+                <button onclick="randomEvent()" class="bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-purple-900/40 transition-all active:scale-95">สุ่มเหตุการณ์พิเศษ!</button>
+                <button onclick="resetExpedition()" class="text-slate-500 hover:text-red-400 text-[10px] uppercase tracking-widest">เริ่มการเดินทางใหม่</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Racing Track Area -->
+    <section class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800 mb-8 relative overflow-hidden shadow-inner">
+        <div class="absolute right-0 top-0 bottom-0 w-8 finish-line opacity-30"></div>
+        
+        <div id="tracks-container" class="space-y-12 relative z-10">
+            <!-- Tracks for 4 teams -->
+        </div>
+    </section>
+
+    <!-- Action Center -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
+        <!-- Question Panel -->
+        <div class="lg:col-span-2 bg-slate-800 rounded-3xl p-8 border border-slate-700 shadow-xl flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <div id="q-category" class="px-4 py-1 bg-blue-900/50 text-blue-300 rounded-full text-sm font-bold border border-blue-800">เลือกดินแดนเพื่อเริ่ม</div>
+                <div id="q-level" class="text-yellow-500 font-bold"></div>
+            </div>
+
+            <div id="q-display" class="flex-grow flex flex-col justify-center items-center text-center p-4">
+                <h2 id="question-text" class="text-3xl font-bold leading-snug mb-8 text-slate-200">ยินดีต้อนรับนักล่าคำยืม! <br><span class="text-xl font-normal text-slate-400 italic">กรุณาเลือกหมวดหมู่คำถามด้านล่าง</span></h2>
+                <div id="answer-box" class="hidden w-full bg-slate-950 p-6 rounded-2xl border border-emerald-500/30 animate-bounce-in">
+                    <p class="text-emerald-400 text-2xl font-bold" id="answer-text"></p>
+                </div>
+            </div>
+
+            <div id="category-selectors" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+                <button onclick="pickQuestion('bali')" class="bg-indigo-700 p-3 rounded-xl hover:bg-indigo-600 transition font-bold text-sm">บาลี-สันสกฤต</button>
+                <button onclick="pickQuestion('khmer')" class="bg-emerald-700 p-3 rounded-xl hover:bg-emerald-600 transition font-bold text-sm">เขมร</button>
+                <button onclick="pickQuestion('west')" class="bg-blue-700 p-3 rounded-xl hover:bg-blue-600 transition font-bold text-sm">อังกฤษ/ตะวันตก</button>
+                <button onclick="pickQuestion('asia')" class="bg-amber-700 p-3 rounded-xl hover:bg-amber-600 transition font-bold text-sm">จีน/ชวา/มลายู</button>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-xl">
+            <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                <span class="p-2 bg-blue-600 rounded-lg">🎮</span> ระบบควบคุมการเดิน
+            </h3>
+            
+            <div id="team-controls" class="space-y-4">
+                <!-- Team controls will be injected here -->
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-slate-800">
+                <button id="btn-reveal" onclick="revealAnswer()" class="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black text-xl rounded-2xl shadow-lg shadow-yellow-900/20 transition-all active:scale-95 disabled:opacity-50" disabled>ตรวจคำตอบ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Special Event Modal -->
+<div id="event-modal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center p-6">
+    <div class="bg-indigo-900 border-4 border-purple-500 p-10 rounded-[40px] max-w-lg w-full text-center shadow-[0_0_100px_rgba(168,85,247,0.4)]">
+        <div class="text-6xl mb-6">🎲</div>
+        <h2 id="event-title" class="text-3xl font-black mb-4 text-purple-200 uppercase">เหตุการณ์สุ่ม!</h2>
+        <p id="event-desc" class="text-xl text-white mb-8 leading-relaxed"></p>
+        <button onclick="closeEvent()" class="bg-white text-indigo-900 px-10 py-3 rounded-full font-bold text-lg hover:bg-purple-200 transition">รับทราบ!</button>
+    </div>
+</div>
+
+<script>
+    // --- SOUNDS ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSfx(f, t, d, v=0.1) {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+        g.gain.setValueAtTime(v, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + d);
+    }
+
+    const sounds = {
+        move: () => playSfx(400, 'sine', 0.2),
+        correct: () => { playSfx(600, 'sine', 0.2); setTimeout(()=>playSfx(900, 'sine', 0.4), 100); },
+        event: () => { [300, 400, 500, 600].forEach((f,i)=>setTimeout(()=>playSfx(f, 'square', 0.1), i*100)); },
+        tick: () => playSfx(1200, 'sine', 0.05, 0.02)
+    };
+
+    // --- GAME STATE ---
+    let teams = [
+        { id: 0, name: "นักล่าบาลี", pos: 0, color: "from-blue-500 to-indigo-600", icon: "🏯" },
+        { id: 1, name: "พยัคฆ์เขมร", pos: 0, color: "from-emerald-500 to-teal-600", icon: "🐅" },
+        { id: 2, name: "มังกรจีน", pos: 0, color: "from-red-500 to-orange-600", icon: "🐉" },
+        { id: 3, name: "สิงห์ตะวันตก", pos: 0, color: "from-amber-500 to-yellow-600", icon: "🦁" }
+    ];
+
+    const questions = {
+        bali: [
+            { q: "พยัญชนะตัว 'ฬ' พบในคำยืมจากภาษาใด?", a: "ภาษาบาลี (เช่น กีฬา, จุฬา)", lv: 1 },
+            { q: "ถ้าภาษาบาลีใช้ 'อิตถี' ภาษาสันสกฤตจะใช้คำว่าอะไร?", a: "สตรี (บาลีเน้นตัวซ้อน สันสกฤตเน้นคำควบกล้ำ)", lv: 2 },
+            { q: "พยัญชนะตัว 'ฑ' ในคำว่า 'กรีฑา' บ่งบอกว่าเป็นภาษาใด?", a: "ภาษาสันสกฤต", lv: 2 },
+            { q: "คำว่า 'เคราะห์' และ 'ปรัชญา' มีลักษณะเด่นคืออะไร?", a: "เป็นภาษาสันสกฤต (ใช้ ห การันต์ และพยัญชนะควบกล้ำ)", lv: 3 }
+        ],
+        khmer: [
+            { q: "คำว่า 'เดิน' แผลงเป็น 'ดำเนิน' เป็นลักษณะของภาษาใด?", a: "ภาษาเขมร (การแผลงคำ)", lv: 1 },
+            { q: "คำว่า 'เสวย' และ 'เสด็จ' มักนำมาใช้เป็นคำประเภทใดในภาษาไทย?", a: "คำราชาศัพท์", lv: 2 },
+            { q: "คำยืมเขมรที่สะกดด้วย 'จ' ในคำว่า 'ตรวจ' แผลงเป็นคำว่าอะไร?", a: "ตำรวจ (การลงอาคม อำ-น)", lv: 3 },
+            { q: "จงยกตัวอย่างคำยืมเขมรที่สะกดด้วย 'ญ' มา 2 คำ?", a: "ชำนาญ, สำราญ, เพ็ญ", lv: 2 }
+        ],
+        west: [
+            { q: "การนำคำว่า 'Bank' มาใช้เป็น 'แบงก์' เรียกว่าวิธีการใด?", a: "การทับศัพท์ (Transliteration)", lv: 1 },
+            { q: "ศัพท์บัญญัติของคำว่า 'Globalization' คือคำว่าอะไร?", a: "โลกาภิวัตน์", lv: 2 },
+            { q: "คำว่า 'กัปตัน' และ 'ยศ' รับมาจากชาติใดชาติแรกที่เข้ามาค้าขาย?", a: "โปรตุเกส (ยุคแรกๆ)", lv: 3 },
+            { q: "โครงสร้างประโยค 'เขาถูกตี' รับอิทธิพลมาจากภาษาใด?", a: "ภาษาอังกฤษ (Passive Voice)", lv: 2 }
+        ],
+        asia: [
+            { q: "คำเรียกเครื่องใช้ 'ตะเกียบ' และ 'ตู้' มาจากภาษาใด?", a: "ภาษาจีน", lv: 1 },
+            { q: "คำว่า 'บุหงา' และ 'สาคู' มาจากภาษาใด?", a: "ภาษามลายู", lv: 2 },
+            { q: "คำว่า 'กระดังงา' ในภาษาชวาแผลงมาจากคำเดิมว่าอะไร?", a: "กานังงา", lv: 3 },
+            { q: "คำว่า 'เจ๊' และ 'เฮีย' สังเกตความเป็นจีนได้จากอะไร?", a: "การใช้เสียงวรรณยุกต์ตรีและจัตวา", lv: 1 }
+        ]
+    };
+
+    let currentQuestion = null;
+    let gameTime = 3600;
+
+    // --- LOGIC ---
+    function init() {
+        renderTracks();
+        renderControls();
+        setInterval(tick, 1000);
+    }
+
+    function renderTracks() {
+        const container = document.getElementById('tracks-container');
+        container.innerHTML = '';
+        teams.forEach(team => {
+            container.innerHTML += `
+                <div class="relative h-16 w-full track-bg rounded-xl flex items-center px-2 border-b border-slate-800">
+                    <div class="team-pawn absolute left-0 flex items-center gap-3 bouncing" style="left: ${team.pos}%">
+                        <div class="w-14 h-14 bg-gradient-to-br ${team.color} rounded-2xl flex items-center justify-center text-3xl shadow-[0_0_20px_rgba(0,0,0,0.5)] border-2 border-white/20">
+                            ${team.icon}
+                        </div>
+                        <div class="bg-black/60 backdrop-blur px-3 py-1 rounded-lg text-xs font-bold border border-white/10">
+                            ${team.name}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function renderControls() {
+        const container = document.getElementById('team-controls');
+        container.innerHTML = '';
+        teams.forEach((team, i) => {
+            container.innerHTML += `
+                <div class="flex items-center justify-between p-3 bg-slate-800 rounded-2xl border border-slate-700">
+                    <span class="font-bold text-sm">${team.icon} ${team.name}</span>
+                    <div class="flex gap-1">
+                        <button onclick="moveTeam(${i}, 1)" class="bg-emerald-600 hover:bg-emerald-500 w-8 h-8 rounded-lg font-bold text-xs">+1</button>
+                        <button onclick="moveTeam(${i}, 2)" class="bg-blue-600 hover:bg-blue-500 w-8 h-8 rounded-lg font-bold text-xs">+2</button>
+                        <button onclick="moveTeam(${i}, -1)" class="bg-red-900/50 hover:bg-red-800 w-8 h-8 rounded-lg font-bold text-xs">-1</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function pickQuestion(cat) {
+        const pool = questions[cat];
+        currentQuestion = pool[Math.floor(Math.random() * pool.length)];
+        
+        document.getElementById('q-category').innerText = "ดินแดน: " + cat.toUpperCase();
+        document.getElementById('q-level').innerText = "ระดับความยาก: " + "⭐".repeat(currentQuestion.lv);
+        document.getElementById('question-text').innerHTML = currentQuestion.q;
+        
+        document.getElementById('answer-box').classList.add('hidden');
+        document.getElementById('btn-reveal').disabled = false;
+        sounds.click = () => playSfx(500, 'sine', 0.1);
+        sounds.click();
+    }
+
+    function revealAnswer() {
+        document.getElementById('answer-text').innerText = currentQuestion.a;
+        document.getElementById('answer-box').classList.remove('hidden');
+        document.getElementById('btn-reveal').disabled = true;
+        sounds.correct();
+    }
+
+    function moveTeam(idx, steps) {
+        teams[idx].pos = Math.max(0, Math.min(90, teams[idx].pos + (steps * 10)));
+        renderTracks();
+        sounds.move();
+        if (teams[idx].pos >= 90) {
+            alert("ยินดีด้วย! " + teams[idx].name + " ถึงเส้นชัยแล้ว!");
+        }
+    }
+
+    function randomEvent() {
+        const events = [
+            { t: "พายุทราย!", d: "ทีมที่นำอยู่ตอนนี้ต้องถอยหลัง 1 ก้าวเพื่อหาที่กำบัง!", action: () => {
+                let lead = teams.reduce((p, c) => p.pos > c.pos ? p : c);
+                moveTeam(lead.id, -1);
+            }},
+            { t: "พรจากนักปราชญ์", d: "ทุกทีมได้ก้าวไปข้างหน้า 1 ก้าว จากความรู้ที่ได้รับ!", action: () => {
+                teams.forEach((t, i) => moveTeam(i, 1));
+            }},
+            { t: "ทางลัดลับ", d: "ทีมที่คะแนนน้อยที่สุด ค้นพบทางลัด ขยับไปข้างหน้า 2 ก้าว!", action: () => {
+                let last = teams.reduce((p, c) => p.pos < c.pos ? p : c);
+                moveTeam(last.id, 2);
+            }}
+        ];
+        const ev = events[Math.floor(Math.random() * events.length)];
+        document.getElementById('event-title').innerText = ev.t;
+        document.getElementById('event-desc').innerText = ev.d;
+        document.getElementById('event-modal').classList.remove('hidden');
+        sounds.event();
+        ev.action();
+    }
+
+    function closeEvent() {
+        document.getElementById('event-modal').classList.add('hidden');
+    }
+
+    function tick() {
+        if (gameTime > 0) {
+            gameTime--;
+            const m = Math.floor(gameTime / 60);
+            const s = gameTime % 60;
+            document.getElementById('main-timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+            if (gameTime < 300) document.getElementById('main-timer').classList.add('text-red-500');
+        }
+    }
+
+    function resetExpedition() {
+        if (confirm("ต้องการเริ่มการเดินทางใหม่?")) {
+            teams.forEach(t => t.pos = 0);
+            gameTime = 3600;
+            renderTracks();
+        }
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
