@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thai Language Game P.2</title>
+    <style>
+        :root { --primary: #ff6b6b; --secondary: #4ecdc4; }
+        body { margin: 0; font-family: 'Sarabun', sans-serif; overflow: hidden; background: #f0f2f5; }
+        
+        /* Classroom Tools Style */
+        .tool-box { position: absolute; z-index: 100; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); padding: 10px; cursor: move; }
+        
+        /* 1. Timer */
+        #timer-tool { top: 20px; right: 20px; width: 150px; text-align: center; resize: both; overflow: auto; }
+        #timer-display { font-size: 2rem; font-weight: bold; color: var(--primary); }
+
+        /* 2. Randomizer */
+        #random-tool { bottom: 20px; left: 20px; width: 200px; text-align: center; }
+        #number-display { font-size: 3rem; height: 80px; line-height: 80px; background: #333; color: #0f0; border-radius: 10px; margin: 10px 0; }
+
+        /* 3. Whiteboard */
+        #drawing-canvas { position: absolute; top: 0; left: 0; z-index: 10; pointer-events: none; }
+        .canvas-active { pointer-events: auto !important; cursor: crosshair; }
+        .drawing-controls { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 101; display: flex; gap: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 20px; }
+
+        /* Content Sidebar */
+        #sidebar { position: absolute; left: 0; top: 0; width: 250px; height: 100%; background: #2c3e50; color: white; padding: 20px; z-index: 50; transition: 0.3s; }
+        .lesson-btn { display: block; width: 100%; padding: 10px; margin-bottom: 5px; background: #34495e; border: none; color: white; text-align: left; cursor: pointer; border-radius: 5px; }
+        .lesson-btn:hover { background: var(--secondary); }
+    </style>
+</head>
+<body>
+
+<div class="drawing-controls">
+    <input type="color" id="penColor" value="#ff0000">
+    <button onclick="toggleDraw()">🖌️ เขียน/ปิด</button>
+    <button onclick="clearCanvas()">🗑️ ล้างหน้าจอ</button>
+</div>
+
+<div id="timer-tool" class="tool-box" draggable="true">
+    <div id="timer-display">00:00</div>
+    <input type="number" id="timeInput" placeholder="วินาที" style="width: 60px;">
+    <button onclick="startTimer()">เริ่ม</button>
+</div>
+
+<div id="random-tool" class="tool-box">
+    <div id="number-display">?</div>
+    <input type="number" id="minNum" value="1" style="width: 40px;"> - 
+    <input type="number" id="maxNum" value="40" style="width: 40px;">
+    <button onclick="startRandom()">สุ่มเลขที่</button>
+</div>
+
+<div id="sidebar">
+    <h3>📖 บทเรียน ป.2</h3>
+    <button class="lesson-btn" onclick="loadLesson('สระเอีย (น.22)')">บทที่ 1: สระเอีย</button>
+    <button class="lesson-btn" onclick="loadLesson('คำควบกล้ำ (น.37)')">บทที่ 2: คำควบกล้ำ</button>
+    <button class="lesson-btn" onclick="loadLesson('โลกร้อน (น.70)')">บทที่ 3: โลกร้อน</button>
+    <button class="lesson-btn" onclick="loadLesson('มารยาทไทย (น.65)')">บทที่ 4: มารยาท</button>
+</div>
+
+<div id="game-content" style="margin-left: 270px; padding: 50px; text-align: center;">
+    <h1 id="lesson-title">กรุณาเลือกบทเรียน</h1>
+    <div id="exercise-area" style="font-size: 2rem; background: white; padding: 40px; border-radius: 20px;">
+        </div>
+</div>
+
+<canvas id="drawing-canvas"></canvas>
+
+<script>
+    // --- 1. Timer Logic ---
+    let timer;
+    function startTimer() {
+        clearInterval(timer);
+        let time = document.getElementById('timeInput').value;
+        const display = document.getElementById('timer-display');
+        timer = setInterval(() => {
+            let mins = Math.floor(time / 60);
+            let secs = time % 60;
+            display.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+            if (time <= 0) { clearInterval(timer); alert("หมดเวลา!"); }
+            time--;
+        }, 1000);
+    }
+
+    // --- 2. Randomizer Logic ---
+    function startRandom() {
+        const min = parseInt(document.getElementById('minNum').value);
+        const max = parseInt(document.getElementById('maxNum').value);
+        const display = document.getElementById('number-display');
+        let count = 0;
+        let interval = setInterval(() => {
+            display.innerText = Math.floor(Math.random() * (max - min + 1)) + min;
+            count++;
+            if (count > 20) { // วิ่ง 20 ครั้งแล้วหยุด
+                clearInterval(interval);
+                display.style.color = "yellow";
+                setTimeout(() => display.style.color = "#0f0", 1000);
+            }
+        }, 50); // ความเร็วตัวเลขวิ่ง
+    }
+
+    // --- 3. Whiteboard Logic ---
+    const canvas = document.getElementById('drawing-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function toggleDraw() {
+        canvas.classList.toggle('canvas-active');
+    }
+
+    canvas.addEventListener('mousedown', (e) => { drawing = true; draw(e); });
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', () => { drawing = false; ctx.beginPath(); });
+
+    function draw(e) {
+        if (!drawing || !canvas.classList.contains('canvas-active')) return;
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = document.getElementById('penColor').value;
+        ctx.lineTo(e.clientX, e.clientY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX, e.clientY);
+    }
+
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    // --- 4. Content Logic ---
+    function loadLesson(title) {
+        document.getElementById('lesson-title').innerText = title;
+        let content = "";
+        if(title.includes('สระเอีย')) content = "เติมคำสระเอีย: น_ _ , เ_ _ ย , เ_ _ ยน"; [cite: 45]
+        if(title.includes('คำควบกล้ำ')) content = "แยกคำควบกล้ำ: พริก, กลอง, เตรียม, ปลา"; [cite: 55]
+        if(title.includes('โลกร้อน')) content = "วิธีลดโลกร้อน: ใช้ถุงผ้า, ปลูกต้นไม้"; [cite: 70]
+        document.getElementById('exercise-area').innerText = content;
+    }
+
+    // Make tools draggable
+    const tools = document.querySelectorAll('.tool-box');
+    tools.forEach(tool => {
+        tool.onmousedown = function(e) {
+            let shiftX = e.clientX - tool.getBoundingClientRect().left;
+            let shiftY = e.clientY - tool.getBoundingClientRect().top;
+            function moveAt(pageX, pageY) {
+                tool.style.left = pageX - shiftX + 'px';
+                tool.style.top = pageY - shiftY + 'px';
+            }
+            function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
+            document.addEventListener('mousemove', onMouseMove);
+            tool.onmouseup = function() {
+                document.removeEventListener('mousemove', onMouseMove);
+                tool.onmouseup = null;
+            };
+        };
+        tool.ondragstart = function() { return false; };
+    });
+</script>
+
+</body>
+</html>
