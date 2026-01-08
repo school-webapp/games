@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loanword Battle Royale - เกมสมรภูมิคำยืม</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #0f172a; overflow-x: hidden; }
+        .card-flip { transition: transform 0.6s; transform-style: preserve-3d; }
+        .neon-border { box-shadow: 0 0 15px #3b82f6, inset 0 0 5px #3b82f6; }
+        .neon-text { text-shadow: 0 0 10px #3b82f6; }
+        @keyframes pulse-red { 0%, 100% { background-color: #ef4444; } 50% { background-color: #7f1d1d; } }
+        .timer-urgent { animation: pulse-red 0.5s infinite; }
+    </style>
+</head>
+<body class="text-white">
+
+<div id="app" class="min-h-screen p-4 flex flex-col">
+    <!-- Header -->
+    <header class="flex justify-between items-center bg-slate-800 p-4 rounded-2xl shadow-2xl border border-slate-700 mb-6">
+        <div class="flex items-center gap-4">
+            <div class="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-500/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold neon-text">สมรภูมิคำยืม</h1>
+                <p class="text-xs text-slate-400">ภาษาต่างประเทศในภาษาไทย (Updated Questions)</p>
+            </div>
+        </div>
+        
+        <div id="game-timer" class="text-4xl font-mono bg-slate-900 px-6 py-2 rounded-full border border-blue-500 text-blue-400">
+            60:00
+        </div>
+
+        <div class="flex gap-2">
+            <!-- เพิ่มลิงค์ไปยัง game02.html -->
+            <a href="game02.html" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm transition font-bold flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                ไปที่หน้า Expedition
+            </a>
+            <button onclick="setupTeams()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm transition font-bold">ตั้งค่าทีม</button>
+            <button onclick="resetGame()" class="bg-red-900/50 hover:bg-red-800 px-4 py-2 rounded-lg text-sm transition text-red-300">ล้างเกม</button>
+        </div>
+    </header>
+
+    <!-- Scoreboard -->
+    <div id="scoreboard" class="grid grid-cols-4 gap-4 mb-6">
+        <!-- Teams will be injected here -->
+    </div>
+
+    <!-- Main Game Board -->
+    <main id="game-board" class="flex-grow grid grid-cols-4 gap-4">
+        <!-- Categories and Points will be injected here -->
+    </main>
+</div>
+
+<!-- Question Modal -->
+<div id="modal" class="fixed inset-0 bg-slate-950/95 hidden flex items-center justify-center p-6 z-50">
+    <div class="bg-slate-900 w-full max-w-4xl rounded-3xl border-2 border-blue-500 p-8 shadow-[0_0_50px_rgba(59,130,246,0.3)] relative overflow-hidden">
+        <div id="modal-timer" class="absolute top-0 left-0 h-2 bg-blue-500 transition-all duration-1000" style="width: 100%;"></div>
+        
+        <div class="flex justify-between items-center mb-8">
+            <span id="modal-category" class="bg-blue-600 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-widest">หมวดหมู่</span>
+            <span id="modal-points" class="text-3xl font-bold text-yellow-400">500</span>
+        </div>
+
+        <div class="text-center py-12">
+            <h2 id="modal-question" class="text-3xl md:text-4xl font-bold leading-tight mb-8">คำถามจะปรากฏที่นี่?</h2>
+            <div id="modal-answer" class="hidden text-2xl text-emerald-400 font-bold bg-emerald-900/20 p-6 rounded-2xl border border-emerald-500/30 mb-8">
+                เฉลย: <span id="answer-text">คำตอบที่ถูกต้อง</span>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-4">
+            <button id="btn-show-answer" onclick="showAnswer()" class="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold px-8 py-4 rounded-xl shadow-lg transition transform active:scale-95">ดูเฉลย</button>
+            <div id="scoring-controls" class="hidden flex gap-4">
+                <!-- Team scoring buttons injected here -->
+            </div>
+            <button onclick="closeModal()" class="bg-slate-700 hover:bg-slate-600 font-bold px-8 py-4 rounded-xl transition">ปิดข้อนี้</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- SOUND ENGINE (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, type, duration, vol = 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    const sfx = {
+        click: () => playSound(600, 'sine', 0.1),
+        correct: () => { playSound(500, 'sine', 0.3); setTimeout(() => playSound(800, 'sine', 0.5), 100); },
+        wrong: () => { playSound(150, 'sawtooth', 0.5, 0.2); },
+        timer: () => playSound(1000, 'sine', 0.05, 0.05),
+        open: () => playSound(400, 'square', 0.2, 0.05),
+        win: () => { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playSound(f, 'sine', 0.6), i * 150)); }
+    };
+
+    // --- UPDATED GAME DATA (Challenging Questions) ---
+    const gameData = [
+        {
+            category: "บาลี-สันสกฤต",
+            questions: [
+                { pts: 100, q: "พยัญชนะตัว 'ฬ' ในคำว่า 'กีฬา' เป็นพยัญชนะเฉพาะที่มีแค่ในภาษาใด?", a: "ภาษาบาลี", used: false },
+                { pts: 200, q: "สระ 'ไอ' และ 'เอา' เป็นลักษณะเด่นที่พบได้บ่อยในภาษาใด?", a: "ภาษาสันสกฤต", used: false },
+                { pts: 300, q: "ถ้าภาษาบาลีใช้คำว่า 'อิทธิ' ภาษาสันสกฤตจะใช้คำว่าอะไร?", a: "ฤทธิ์ (สังเกตการใช้สระ ฤ)", used: false },
+                { pts: 400, q: "คำว่า 'ภรรยา' ในภาษาสันสกฤต แผลงมาจากคำเดิมว่าอะไร?", a: "ภารยา", used: false },
+                { pts: 500, q: "หลักเกณฑ์ตัวสะกด-ตัวตาม 'พยัญชนะวรรค' เป็นกฎเกณฑ์ของภาษาใด?", a: "ภาษาบาลี", used: false }
+            ]
+        },
+        {
+            category: "ภาษาเขมร",
+            questions: [
+                { pts: 100, q: "คำว่า 'เสวย' มีความหมายว่าอย่างไร และเป็นคำชนิดใด?", a: "แปลว่า กิน (เป็นคำราชาศัพท์)", used: false },
+                { pts: 200, q: "จงบอกตัวสะกดที่เป็นเอกลักษณ์ของเขมรที่ปรากฏในคำว่า 'เสด็จ'?", a: "ตัว 'จ' (สะกดด้วย จ ญ ร ล ส)", used: false },
+                { pts: 300, q: "คำว่า 'กำเนิด' แผลงมาจากคำกริยาเดิมคือคำว่าอะไร?", a: "เกิด", used: false },
+                { pts: 400, q: "คำว่า 'ตำรวจ' เป็นคำที่แผลงมาจากคำว่าอะไรตามหลักภาษาเขมร?", a: "ตรวจ", used: false },
+                { pts: 500, q: "การเติม 'อำ-น' กลางคำ เช่น 'เกิด' เป็น 'กำเนิด' เรียกว่าการลงอะไร?", a: "การลงอาคม", used: false }
+            ]
+        },
+        {
+            category: "ภาษาอังกฤษ",
+            questions: [
+                { pts: 100, q: "การรับคำว่า 'Computer' มาใช้เป็น 'คอมพิวเตอร์' เรียกว่าวิธีการใด?", a: "การทับศัพท์", used: false },
+                { pts: 200, q: "คำว่า 'วีดิทัศน์' เป็นคำที่ถูกสร้างขึ้นใหม่เพื่อใช้แทนคำว่าอะไร?", a: "Video (เป็นศัพท์บัญญัติ)", used: false },
+                { pts: 300, q: "คำว่า 'โชเฟอร์' จริงๆ แล้วรากศัพท์เดิมมาจากภาษาใด?", a: "ภาษาฝรั่งเศส (ผ่านภาษาอังกฤษ)", used: false },
+                { pts: 400, q: "อิทธิพลภาษาอังกฤษทำให้โครงสร้างประโยค 'ถูกแต่งตั้ง' เปลี่ยนไปอย่างไร?", a: "เป็นการใช้ประโยคแบบกรรมวาจก (Passive Voice)", used: false },
+                { pts: 500, q: "คำว่า 'เซ็น' ในความหมายว่าลงชื่อ แผลงมาจากคำอังกฤษคำว่าอะไร?", a: "Sign", used: false }
+            ]
+        },
+        {
+            category: "จีน/ชวา/มลายู",
+            questions: [
+                { pts: 100, q: "คำว่า 'ก๋วยเตี๋ยว' มีเสียงวรรณยุกต์ใดที่บ่งบอกว่าเป็นภาษาจีน?", a: "เสียงจัตวา (และเสียงตรี เป็นเอกลักษณ์ภาษาจีน)", used: false },
+                { pts: 200, q: "วรรณคดีเรื่อง 'อิเหนา' เป็นที่มาของคำยืมจากภาษาใด?", a: "ภาษาชวา", used: false },
+                { pts: 300, q: "คำว่า 'มังคุด' และ 'ทุเรียน' เป็นคำยืมจากภาษาถิ่นทางใต้ภาษาใด?", a: "ภาษามลายู", used: false },
+                { pts: 400, q: "คำว่า 'บุหลัน' ในภาษาชวา มีความหมายว่าอะไร?", a: "ดวงจันทร์", used: false },
+                { pts: 500, q: "คำว่า 'สาคู' (Sagu) มีที่มาจากภาษาใด?", a: "ภาษามลายู", used: false }
+            ]
+        }
+    ];
+
+    let teams = [
+        { name: "ทีม 1", score: 0 },
+        { name: "ทีม 2", score: 0 },
+        { name: "ทีม 3", score: 0 },
+        { name: "ทีม 4", score: 0 }
+    ];
+
+    let currentQ = null;
+    let timerInterval = null;
+    let gameTime = 3600; // 60 mins
+
+    // --- RENDER FUNCTIONS ---
+    function init() {
+        renderBoard();
+        renderScoreboard();
+        startGlobalTimer();
+    }
+
+    function renderBoard() {
+        const board = document.getElementById('game-board');
+        board.innerHTML = '';
+        gameData.forEach((cat, cIdx) => {
+            const col = document.createElement('div');
+            col.className = "space-y-4";
+            
+            const head = document.createElement('div');
+            head.className = "bg-blue-900/50 p-4 rounded-xl border border-blue-500 font-bold text-center text-blue-300 uppercase tracking-tighter h-16 flex items-center justify-center";
+            head.innerText = cat.category;
+            col.appendChild(head);
+
+            cat.questions.forEach((q, qIdx) => {
+                const btn = document.createElement('button');
+                btn.className = q.used 
+                    ? "w-full py-8 bg-slate-800/30 text-slate-700 rounded-2xl border border-slate-800 cursor-not-allowed text-xl font-bold"
+                    : "w-full py-8 bg-slate-800 hover:bg-blue-600 hover:scale-105 rounded-2xl border border-slate-700 shadow-xl transition-all text-2xl font-bold text-yellow-500 hover:text-white";
+                btn.innerText = q.used ? "✘" : q.pts;
+                if (!q.used) btn.onclick = () => openQuestion(cIdx, qIdx);
+                col.appendChild(btn);
+            });
+            board.appendChild(col);
+        });
+    }
+
+    function renderScoreboard() {
+        const sb = document.getElementById('scoreboard');
+        sb.innerHTML = '';
+        teams.forEach((t, i) => {
+            const div = document.createElement('div');
+            div.className = "bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg flex justify-between items-center transition-all";
+            div.innerHTML = `
+                <div class="overflow-hidden">
+                    <p class="text-xs text-slate-400 uppercase font-bold truncate">${t.name}</p>
+                    <p class="text-3xl font-mono font-bold text-blue-400">${t.score}</p>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <button onclick="updateScore(${i}, 50)" class="bg-blue-600/20 text-blue-400 p-1 rounded hover:bg-blue-600/40 text-[10px]">+50</button>
+                    <button onclick="updateScore(${i}, -50)" class="bg-red-900/20 text-red-400 p-1 rounded hover:bg-red-900/40 text-[10px]">-50</button>
+                </div>
+            `;
+            sb.appendChild(div);
+        });
+    }
+
+    function startGlobalTimer() {
+        const timerDisplay = document.getElementById('game-timer');
+        if (window.gTimer) clearInterval(window.gTimer);
+        window.gTimer = setInterval(() => {
+            if (gameTime > 0) {
+                gameTime--;
+                const m = Math.floor(gameTime / 60);
+                const s = gameTime % 60;
+                timerDisplay.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+            }
+        }, 1000);
+    }
+
+    // --- LOGIC ---
+    function openQuestion(cIdx, qIdx) {
+        sfx.open();
+        currentQ = { cIdx, qIdx, ...gameData[cIdx].questions[qIdx] };
+        document.getElementById('modal-category').innerText = gameData[cIdx].category;
+        document.getElementById('modal-points').innerText = currentQ.pts;
+        document.getElementById('modal-question').innerText = currentQ.q;
+        document.getElementById('answer-text').innerText = currentQ.a;
+        
+        document.getElementById('modal-answer').classList.add('hidden');
+        document.getElementById('btn-show-answer').classList.remove('hidden');
+        document.getElementById('scoring-controls').classList.add('hidden');
+        
+        document.getElementById('modal').classList.remove('hidden');
+        startModalTimer();
+    }
+
+    function startModalTimer() {
+        let timeLeft = 30;
+        const bar = document.getElementById('modal-timer');
+        bar.style.width = '100%';
+        bar.classList.remove('timer-urgent');
+        
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            bar.style.width = (timeLeft / 30 * 100) + '%';
+            if (timeLeft <= 5) {
+                bar.classList.add('timer-urgent');
+                sfx.timer();
+            }
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                sfx.wrong();
+            }
+        }, 1000);
+    }
+
+    function showAnswer() {
+        sfx.click();
+        clearInterval(timerInterval);
+        document.getElementById('modal-answer').classList.remove('hidden');
+        document.getElementById('btn-show-answer').classList.add('hidden');
+        
+        const sc = document.getElementById('scoring-controls');
+        sc.innerHTML = '';
+        teams.forEach((t, i) => {
+            const b = document.createElement('button');
+            b.className = "bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg font-bold text-sm transition";
+            b.innerText = t.name + " +";
+            b.onclick = () => awardPoints(i);
+            sc.appendChild(b);
+        });
+        sc.classList.remove('hidden');
+    }
+
+    function awardPoints(tIdx) {
+        sfx.correct();
+        teams[tIdx].score += currentQ.pts;
+        gameData[currentQ.cIdx].questions[currentQ.qIdx].used = true;
+        closeModal();
+    }
+
+    function updateScore(tIdx, amt) {
+        teams[tIdx].score += amt;
+        sfx.click();
+        renderScoreboard();
+    }
+
+    function closeModal() {
+        clearInterval(timerInterval);
+        document.getElementById('modal').classList.add('hidden');
+        renderBoard();
+        renderScoreboard();
+        currentQ = null;
+    }
+
+    function setupTeams() {
+        const names = prompt("ใส่ชื่อทีม คั่นด้วยคอมม่า (,) เช่น ทีมมังกร,ทีมสิงห์,ทีมหงส์,ทีมเสือ", teams.map(t=>t.name).join(','));
+        if (names) {
+            teams = names.split(',').map(n => ({ name: n.trim(), score: 0 }));
+            renderScoreboard();
+        }
+    }
+
+    function resetGame() {
+        if (confirm("ต้องการรีเซ็ตคะแนนและคำถามทั้งหมด?")) {
+            gameData.forEach(c => c.questions.forEach(q => q.used = false));
+            teams.forEach(t => t.score = 0);
+            gameTime = 3600;
+            init();
+            sfx.win();
+        }
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
