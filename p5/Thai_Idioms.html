@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมทายสำนวนไทย - All-in-One Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .tool-btn {
+            @apply flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300;
+        }
+        .tool-btn.active {
+            @apply bg-indigo-600 text-white shadow-lg scale-110;
+        }
+        .tool-btn:not(.active) {
+            @apply text-gray-400 hover:bg-indigo-50 hover:text-indigo-600;
+        }
+        .stage-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .stage-content.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #drawing-canvas {
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px; height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #4f46e5; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="glass w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden relative">
+        
+        <!-- Header Section -->
+        <header class="p-6 border-b flex justify-between items-center bg-white/50">
+            <div>
+                <h1 class="text-2xl font-black text-indigo-900 flex items-center gap-2">
+                    <i data-lucide="graduation-cap" class="text-indigo-600"></i>
+                    สำนวนไทยดิจิทัล
+                </h1>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Education Tool All-in-One</p>
+            </div>
+            <div id="game-status" class="flex items-center gap-6">
+                <div class="text-right">
+                    <span class="block text-[10px] text-gray-400 font-bold">SCORE</span>
+                    <span id="global-score" class="text-xl font-black text-indigo-600">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Stage (Dynamic Area) -->
+        <main class="flex-1 overflow-hidden relative bg-gray-50/50">
+            
+            <!-- 1. Game Screen -->
+            <div id="stage-game" class="stage-content active w-full h-full flex flex-col items-center justify-center p-8">
+                <div id="quiz-area" class="w-full max-w-2xl text-center hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <span id="q-num" class="bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full font-bold">ข้อที่ 1/10</span>
+                        <div class="flex items-center gap-2 text-red-500 font-black text-2xl">
+                            <i data-lucide="timer"></i> <span id="timer-text">20</span>
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <div id="q-emoji" class="text-7xl mb-4">💡</div>
+                        <p id="q-hint" class="text-2xl md:text-3xl font-extrabold text-gray-800"></p>
+                    </div>
+                    <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"></div>
+                </div>
+
+                <div id="start-area" class="text-center space-y-6">
+                    <div class="text-8xl">🇹🇭</div>
+                    <h2 class="text-3xl font-black text-gray-800">พร้อมทายสุภาษิตหรือยัง?</h2>
+                    <button onclick="startGame()" class="bg-indigo-600 text-white px-12 py-4 rounded-2xl text-xl font-bold shadow-xl hover:scale-105 transition-transform">
+                        เริ่มเกมเดี๋ยวนี้!
+                    </button>
+                </div>
+
+                <div id="result-area" class="text-center space-y-6 hidden">
+                    <div class="text-7xl">🏆</div>
+                    <h2 class="text-3xl font-black text-gray-800">จบการทดสอบ!</h2>
+                    <p class="text-gray-500">คุณทำคะแนนได้ยอดเยี่ยมมาก</p>
+                    <button onclick="resetGame()" class="bg-gray-800 text-white px-10 py-3 rounded-xl font-bold">เล่นอีกรอบ</button>
+                </div>
+            </div>
+
+            <!-- 2. Whiteboard Screen -->
+            <div id="stage-board" class="stage-content w-full h-full flex flex-col bg-white">
+                <div class="p-3 border-b flex items-center justify-between bg-gray-50">
+                    <div class="flex items-center gap-4">
+                        <input type="color" id="pen-color" value="#4f46e5" class="w-8 h-8 rounded cursor-pointer">
+                        <input type="range" id="pen-size" min="2" max="20" value="5" class="w-24">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="setEraser()" id="eraser-btn" class="p-2 rounded-lg text-gray-400 hover:bg-gray-200"><i data-lucide="eraser"></i></button>
+                        <button onclick="clearCanvas()" class="p-2 rounded-lg text-red-500 hover:bg-red-50"><i data-lucide="trash-2"></i></button>
+                    </div>
+                </div>
+                <canvas id="drawing-canvas" class="flex-1"></canvas>
+            </div>
+
+            <!-- 3. Scoreboard Screen -->
+            <div id="stage-scores" class="stage-content w-full h-full flex flex-col p-8 items-center">
+                <div class="w-full max-w-md bg-white rounded-3xl p-6 shadow-sm border">
+                    <h3 class="text-xl font-black mb-6 flex items-center gap-2">
+                        <i data-lucide="users" class="text-blue-500"></i> บันทึกคะแนนกลุ่ม
+                    </h3>
+                    <div id="groups-list" class="space-y-4 mb-6"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-group-input" placeholder="ชื่อทีมใหม่..." class="flex-1 border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button onclick="addGroup()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Randomizer Screen -->
+            <div id="stage-random" class="stage-content w-full h-full flex flex-col p-8 items-center justify-center">
+                <div class="w-full max-w-sm bg-white rounded-3xl p-8 shadow-sm border text-center">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-black text-gray-800">🎲 สุ่มผู้โชคดี</h3>
+                        <label class="flex items-center gap-2 text-[10px] font-bold text-gray-400">
+                            ห้ามซ้ำ <div class="switch"><input type="checkbox" id="no-repeat"><span class="slider"></span></div>
+                        </label>
+                    </div>
+                    <div id="rand-display" class="text-8xl font-black text-indigo-600 mb-8 py-10 bg-indigo-50 rounded-3xl">--</div>
+                    <div class="flex gap-4 mb-6">
+                        <input type="number" id="min-val" value="1" class="w-full text-center border rounded-xl p-2 font-bold">
+                        <input type="number" id="max-val" value="40" class="w-full text-center border rounded-xl p-2 font-bold">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="spin()" class="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-colors">สุ่มเลย!</button>
+                        <button onclick="resetDrawn()" class="p-4 bg-gray-100 rounded-2xl text-gray-400 hover:bg-gray-200"><i data-lucide="rotate-ccw"></i></button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Navigation Toolbar -->
+        <nav class="p-4 bg-white border-t flex justify-around items-center">
+            <button onclick="switchTab('game')" id="tab-game" class="tool-btn active">
+                <i data-lucide="gamepad-2"></i>
+                <span class="text-[10px] font-bold mt-1">GAME</span>
+            </button>
+            <button onclick="switchTab('board')" id="tab-board" class="tool-btn">
+                <i data-lucide="pencil"></i>
+                <span class="text-[10px] font-bold mt-1">BOARD</span>
+            </button>
+            <button onclick="switchTab('scores')" id="tab-scores" class="tool-btn">
+                <i data-lucide="users"></i>
+                <span class="text-[10px] font-bold mt-1">SCORES</span>
+            </button>
+            <button onclick="switchTab('random')" id="tab-random" class="tool-btn">
+                <i data-lucide="dices"></i>
+                <span class="text-[10px] font-bold mt-1">RANDOM</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <script>
+        // --- Core Data ---
+        const idioms = [
+            { name: "กงเกวียนกำเกวียน", hint: "เวรกรรมตามทันเหมือนล้อเกวียนที่หมุนตามรอยกันไป", emoji: "🎡" },
+            { name: "กบเลือกนาย", hint: "ไม่พอใจในสิ่งที่ตนมีอยู่ เรียกร้องต้องการเกินควร", emoji: "🐸" },
+            { name: "กระดังงาลนไฟ", hint: "สตรีที่เคยแต่งงานแล้วย่อมมีประสบการณ์ในการปรนนิบัติ", emoji: "🔥" },
+            { name: "กาคาบพริก", hint: "คนผิวคล้ำที่แต่งตัวด้วยเสื้อผ้าสีแดงฉูดฉาด", emoji: "🐦" },
+            { name: "กินน้ำใต้ศอก", hint: "การตกเป็นรองคนอื่น หรือยอมเป็นเมียน้อย", emoji: "💧" },
+            { name: "ขว้างงูไม่พ้นคอ", hint: "ทำอะไรที่ผลร้ายย้อนกลับมาสู่ตนเอง", emoji: "🐍" },
+            { name: "ขิงก็รา ข่าก็แรง", hint: "คนสองคนที่อารมณ์ร้อนพอๆ กัน ไม่ยอมกัน", emoji: "🌶️" },
+            { name: "ดินพอกหางหมู", hint: "งานที่คั่งค้างสะสมไว้เรื่อยๆ จนลำบากตอนท้าย", emoji: "🐷" },
+            { name: "น้ำขึ้นให้รีบตัก", hint: "เมื่อมีโอกาสดีเข้ามา ควรรีบคว้าไว้ทันที", emoji: "🌊" },
+            { name: "ปลาหมอตายเพราะปาก", hint: "พูดจาไม่ระวังจนนำภัยมาสู่ตนเอง", emoji: "👄" }
+        ];
+
+        // --- State Management ---
+        let currentIdx = 0;
+        let score = 0;
+        let timeLeft = 20;
+        let timerId = null;
+        let quizPool = [];
+        let drawn = [];
+        let groups = JSON.parse(localStorage.getItem('eduGroups')) || [{name: "กลุ่ม 1", score: 0}, {name: "กลุ่ม 2", score: 0}];
+
+        // --- Tab Switcher ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.stage-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tool-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`stage-${tabId}`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            if(tabId === 'board') setTimeout(resizeCanvas, 50);
+            if(tabId === 'scores') renderGroups();
+        }
+
+        // --- Game Logic ---
+        function startGame() {
+            score = 0; currentIdx = 0;
+            quizPool = [...idioms].sort(() => Math.random() - 0.5).slice(0, 10);
+            document.getElementById('start-area').classList.add('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('quiz-area').classList.remove('hidden');
+            loadQuiz();
+        }
+
+        function loadQuiz() {
+            if(currentIdx >= quizPool.length) {
+                endQuiz(); return;
+            }
+            const q = quizPool[currentIdx];
+            document.getElementById('global-score').innerText = score;
+            document.getElementById('q-num').innerText = `ข้อที่ ${currentIdx + 1}/${quizPool.length}`;
+            document.getElementById('q-hint').innerText = q.hint;
+            document.getElementById('q-emoji').innerText = q.emoji;
+
+            let opts = [q.name];
+            let pool = idioms.filter(i => i.name !== q.name);
+            opts.push(...pool.sort(() => Math.random() - 0.5).slice(0, 3).map(i => i.name));
+            opts.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+            opts.forEach(opt => {
+                const b = document.createElement('button');
+                b.className = "p-5 bg-white border-2 border-indigo-50 rounded-2xl font-bold text-gray-700 hover:border-indigo-500 hover:bg-indigo-50 transition-all shadow-sm";
+                b.innerText = opt;
+                b.onclick = () => checkAns(opt, q.name);
+                grid.appendChild(b);
+            });
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerId); timeLeft = 20;
+            const el = document.getElementById('timer-text');
+            timerId = setInterval(() => {
+                timeLeft -= 0.1;
+                el.innerText = Math.ceil(timeLeft);
+                if(timeLeft <= 0) { checkAns(null, quizPool[currentIdx].name); }
+            }, 100);
+        }
+
+        function checkAns(sel, cor) {
+            clearInterval(timerId);
+            const btns = document.querySelectorAll('#options-grid button');
+            btns.forEach(b => {
+                b.disabled = true;
+                if(b.innerText === cor) b.className = "p-5 bg-green-500 text-white rounded-2xl font-bold";
+                else if(b.innerText === sel) b.className = "p-5 bg-red-500 text-white rounded-2xl font-bold";
+            });
+            if(sel === cor) score += Math.ceil(timeLeft) * 10;
+            setTimeout(() => { currentIdx++; loadQuiz(); }, 1500);
+        }
+
+        function endQuiz() {
+            document.getElementById('quiz-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            document.getElementById('global-score').innerText = score;
+        }
+
+        function resetGame() {
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('start-area').classList.remove('hidden');
+        }
+
+        // --- Whiteboard Logic ---
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
+        let painting = false; let eraser = false;
+
+        function resizeCanvas() {
+            const box = canvas.parentElement;
+            canvas.width = box.offsetWidth;
+            canvas.height = box.offsetHeight;
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        }
+
+        function startPos(e) { painting = true; draw(e); }
+        function endPos() { painting = false; ctx.beginPath(); }
+        function draw(e) {
+            if(!painting) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+            const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+            ctx.lineWidth = document.getElementById('pen-size').value;
+            ctx.strokeStyle = eraser ? '#FFFFFF' : document.getElementById('pen-color').value;
+            ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
+        }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+        function setEraser() { 
+            eraser = !eraser; 
+            document.getElementById('eraser-btn').classList.toggle('text-indigo-600', eraser);
+            document.getElementById('eraser-btn').classList.toggle('bg-indigo-50', eraser);
+        }
+
+        canvas.addEventListener('mousedown', startPos);
+        canvas.addEventListener('mouseup', endPos);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPos(e); });
+        canvas.addEventListener('touchend', endPos);
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+
+        // --- Scoreboard Logic ---
+        function addGroup() {
+            const input = document.getElementById('new-group-input');
+            if(!input.value) return;
+            groups.push({name: input.value, score: 0});
+            input.value = ''; renderGroups();
+        }
+        function renderGroups() {
+            const list = document.getElementById('groups-list');
+            list.innerHTML = '';
+            groups.forEach((g, i) => {
+                const d = document.createElement('div');
+                d.className = "flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100";
+                d.innerHTML = `
+                    <span class="font-bold text-gray-700">${g.name}</span>
+                    <div class="flex items-center gap-3">
+                        <button onclick="changeScore(${i}, -10)" class="text-red-500 font-black">-</button>
+                        <span class="text-xl font-black text-indigo-600 w-8 text-center">${g.score}</span>
+                        <button onclick="changeScore(${i}, 10)" class="text-green-500 font-black">+</button>
+                        <button onclick="delGroup(${i})" class="ml-2 text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `;
+                list.appendChild(d);
+            });
+            lucide.createIcons();
+            localStorage.setItem('eduGroups', JSON.stringify(groups));
+        }
+        function changeScore(i, a) { groups[i].score = Math.max(0, groups[i].score + a); renderGroups(); }
+        function delGroup(i) { groups.splice(i, 1); renderGroups(); }
+
+        // --- Randomizer Logic ---
+        function resetDrawn() { drawn = []; document.getElementById('rand-display').innerText = '--'; }
+        function spin() {
+            const min = parseInt(document.getElementById('min-val').value);
+            const max = parseInt(document.getElementById('max-val').value);
+            const res = document.getElementById('rand-display');
+            const noRep = document.getElementById('no-repeat').checked;
+            
+            if(noRep && drawn.length >= (max - min + 1)) { res.innerText = "ครบ"; return; }
+
+            let c = 0;
+            const t = setInterval(() => {
+                res.innerText = Math.floor(Math.random() * (max - min + 1)) + min;
+                if(++c > 15) {
+                    clearInterval(t);
+                    let val;
+                    do { val = Math.floor(Math.random() * (max - min + 1)) + min; } 
+                    while(noRep && drawn.includes(val));
+                    if(noRep) drawn.push(val);
+                    res.innerText = val;
+                }
+            }, 60);
+        }
+
+        // Init
+        window.onload = () => { lucide.createIcons(); renderGroups(); };
+        window.onresize = resizeCanvas;
+    </script>
+</body>
+</html>
