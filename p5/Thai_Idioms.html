@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เกมทายสำนวนไทย - Pro Dashboard v3.1</title>
+    <title>เกมทายสำนวนไทย - Pro Dashboard v4.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -12,11 +12,8 @@
             font-family: 'Sarabun', sans-serif;
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin: 0;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin: 0;
         }
         .glass {
             background: rgba(255, 255, 255, 0.98);
@@ -34,25 +31,16 @@
             @apply text-gray-400 hover:bg-indigo-50 hover:text-indigo-600;
         }
         .stage-content {
-            display: none;
-            width: 100%;
-            height: 100%;
+            display: none; width: 100%; height: 100%;
             animation: slideUp 0.3s ease-out;
         }
-        .stage-content.active {
-            display: flex;
-        }
+        .stage-content.active { display: flex; }
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        #drawing-canvas {
-            touch-action: none;
-            cursor: crosshair;
-        }
-        .switch {
-            position: relative; display: inline-block; width: 44px; height: 22px;
-        }
+        #drawing-canvas { touch-action: none; cursor: crosshair; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
@@ -66,6 +54,17 @@
         input:checked + .slider:before { transform: translateX(22px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .choice-btn {
+            @apply p-4 md:p-6 border-2 rounded-3xl font-black transition-all active:scale-95 shadow-sm text-sm md:text-lg text-left relative overflow-hidden;
+        }
+        .group-score-badge {
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .group-score-badge.updated {
+            transform: scale(1.2);
+            filter: brightness(1.2);
+        }
     </style>
 </head>
 <body class="p-2 md:p-4">
@@ -80,7 +79,7 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-black text-indigo-900 leading-none">สำนวนไทยดิจิทัล</h1>
-                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Classroom Ultimate Edition</p>
+                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Classroom Ultimate v4.0</p>
                 </div>
             </div>
 
@@ -90,10 +89,8 @@
 
             <div class="hidden md:flex items-center gap-4 border-l pl-4">
                 <div class="text-right">
-                    <span class="block text-[10px] text-gray-400 font-bold uppercase">ความคืบหน้าเกม</span>
-                    <div class="w-24 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                        <div id="game-progress-bar" class="h-full bg-indigo-500 transition-all duration-500" style="width: 0%"></div>
-                    </div>
+                    <span class="block text-[10px] text-gray-400 font-bold uppercase" id="mode-label">คะแนนรวมเกม</span>
+                    <span id="global-game-score" class="text-xl font-black text-indigo-600">0</span>
                 </div>
             </div>
         </header>
@@ -103,67 +100,76 @@
             
             <!-- 1. Play Screen (Quiz) -->
             <div id="stage-play" class="stage-content active flex-col items-center justify-center p-4 md:p-8">
+                
+                <!-- Start Screen: Mode Selection -->
+                <div id="start-area" class="text-center space-y-8">
+                    <div class="text-9xl animate-bounce">🐘</div>
+                    <div>
+                        <h2 class="text-4xl font-black text-gray-800 mb-2">เลือกโหมดการเล่น</h2>
+                        <p class="text-gray-500 font-medium">ท้าทายความรู้สุภาษิตไทย ก-ฮ</p>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 justify-center">
+                        <button onclick="initMode('single')" class="bg-white border-2 border-indigo-100 text-indigo-600 px-10 py-5 rounded-3xl text-xl font-black shadow-lg hover:border-indigo-600 transition-all flex items-center gap-3">
+                            <i data-lucide="user"></i> เล่นคนเดียว
+                        </button>
+                        <button onclick="initMode('team')" class="bg-indigo-600 text-white px-10 py-5 rounded-3xl text-xl font-black shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3">
+                            <i data-lucide="users"></i> สลับกลุ่มตอบ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group Selection for Turn (Team Mode Only) -->
+                <div id="team-turn-area" class="text-center space-y-8 hidden">
+                    <h2 class="text-3xl font-black text-gray-800">ตาของกลุ่มใดตอบ?</h2>
+                    <div id="team-selector-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-xl mx-auto">
+                        <!-- Group selection buttons injected here -->
+                    </div>
+                </div>
+
+                <!-- Quiz Area -->
                 <div id="quiz-area" class="w-full max-w-2xl text-center hidden">
                     <div class="flex justify-between items-center mb-6">
                         <div class="text-left">
                             <span id="q-num-text" class="text-indigo-600 font-black text-sm uppercase">ข้อที่ 01/10</span>
-                            <div class="text-2xl font-black text-gray-800" id="current-score-display">คะแนน: 0</div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div id="turn-indicator" class="hidden px-3 py-1 bg-yellow-400 text-white text-[10px] font-black rounded-lg uppercase">Turn: Team A</div>
+                            </div>
                         </div>
                         <div class="bg-red-50 px-5 py-2 rounded-2xl border border-red-100 text-red-500 flex items-center gap-2">
                             <i data-lucide="timer" class="w-5 h-5"></i>
                             <span id="timer-text" class="text-3xl font-black tabular-nums">20</span>
                         </div>
                     </div>
-                    <div class="mb-8 bg-white p-8 md:p-12 rounded-[40px] shadow-sm border border-indigo-50 relative">
+                    <div class="mb-8 bg-white p-8 md:p-10 rounded-[40px] shadow-sm border border-indigo-50 relative">
                         <div id="q-emoji" class="text-7xl mb-4">💡</div>
-                        <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">คำใบ้คือ...</p>
-                        <p id="q-hint" class="text-xl md:text-3xl font-extrabold text-gray-800 leading-tight"></p>
+                        <p class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-3">ความหมายคือ...</p>
+                        <p id="q-hint" class="text-xl md:text-2xl font-extrabold text-gray-800 leading-tight"></p>
                     </div>
                     <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"></div>
                 </div>
 
-                <div id="start-area" class="text-center space-y-8">
-                    <div class="text-9xl animate-bounce">🐘</div>
-                    <div>
-                        <h2 class="text-4xl font-black text-gray-800 mb-2">เริ่มเล่นทายสำนวน</h2>
-                        <p class="text-gray-500 font-medium">สุ่มคำถามจากคลังข้อมูล ก-ฮ พร้อมระบบนับเวลา</p>
-                    </div>
-                    <button onclick="startGame()" class="bg-indigo-600 text-white px-16 py-5 rounded-3xl text-2xl font-black shadow-xl hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-3 mx-auto">
-                        เริ่มประลอง <i data-lucide="play"></i>
-                    </button>
-                </div>
-
+                <!-- Result Area -->
                 <div id="result-area" class="text-center space-y-6 hidden">
                     <div class="text-8xl">🏆</div>
-                    <h2 class="text-4xl font-black text-gray-800">สรุปคะแนนเกม</h2>
-                    <div class="bg-white px-12 py-8 rounded-[40px] inline-block shadow-xl border-4 border-indigo-50">
-                        <p class="text-gray-400 font-bold text-sm uppercase mb-1">คะแนนรวมทั้งหมด</p>
-                        <p id="final-game-score" class="text-7xl font-black text-indigo-600">0</p>
+                    <h2 class="text-4xl font-black text-gray-800">สรุปคะแนน</h2>
+                    <div id="result-stat-card" class="bg-white px-12 py-8 rounded-[40px] inline-block shadow-xl border-4 border-indigo-50">
+                        <!-- Score results -->
                     </div>
                     <br>
-                    <button onclick="resetGame()" class="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg">เล่นใหม่อีกครั้ง</button>
+                    <button onclick="resetGame()" class="bg-indigo-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg mt-4">กลับหน้าหลัก</button>
                 </div>
             </div>
 
-            <!-- 2. Board Screen (Whiteboard) -->
+            <!-- 2. Board Screen -->
             <div id="stage-board" class="stage-content flex-col bg-white">
                 <div class="p-3 border-b flex items-center justify-between bg-gray-50/80">
                     <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-2 bg-white p-1 rounded-xl border">
-                            <input type="color" id="pen-color" value="#4f46e5" class="w-10 h-10 rounded-lg cursor-pointer border-none bg-transparent">
-                            <span class="text-[10px] font-bold text-gray-400 uppercase pr-2">สีปากกา</span>
-                        </div>
-                        <div class="flex items-center gap-3 bg-white p-1 px-4 rounded-xl border">
-                            <input type="range" id="pen-size" min="2" max="50" value="8" class="w-24 md:w-48 accent-indigo-600">
-                        </div>
+                        <input type="color" id="pen-color" value="#4f46e5" class="w-10 h-10 rounded-lg cursor-pointer border-none bg-transparent">
+                        <input type="range" id="pen-size" min="2" max="50" value="8" class="w-24 md:w-48 accent-indigo-600">
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="setEraser()" id="eraser-btn" class="p-3 rounded-xl text-gray-400 hover:bg-gray-100 border transition-all">
-                            <i data-lucide="eraser"></i>
-                        </button>
-                        <button onclick="clearCanvas()" class="p-3 rounded-xl text-red-500 hover:bg-red-50 border border-red-100 transition-all">
-                            <i data-lucide="trash-2"></i>
-                        </button>
+                        <button onclick="setEraser()" id="eraser-btn" class="p-3 rounded-xl text-gray-400 hover:bg-gray-100 border transition-all"><i data-lucide="eraser"></i></button>
+                        <button onclick="clearCanvas()" class="p-3 rounded-xl text-red-500 hover:bg-red-50 border border-red-100 transition-all"><i data-lucide="trash-2"></i></button>
                     </div>
                 </div>
                 <div class="flex-1 relative bg-gray-50">
@@ -171,71 +177,57 @@
                 </div>
             </div>
 
-            <!-- 3. Scores Screen (Management) -->
+            <!-- 3. Scores Screen -->
             <div id="stage-scores" class="stage-content flex-col p-4 md:p-8 items-center overflow-y-auto">
                 <div class="w-full max-w-lg bg-white rounded-[40px] p-8 shadow-sm border border-indigo-100">
                     <div class="flex justify-between items-center mb-8">
                         <div>
-                            <h3 class="text-2xl font-black text-indigo-900">บันทึกคะแนนกลุ่ม</h3>
+                            <h3 class="text-2xl font-black text-indigo-900">จัดการทีม</h3>
                             <p class="text-xs text-gray-400 font-bold uppercase tracking-widest">Team Dashboard</p>
                         </div>
                         <i data-lucide="users" class="text-indigo-600 w-8 h-8"></i>
                     </div>
                     <div id="groups-list" class="space-y-4 mb-8"></div>
                     <div class="flex gap-3 bg-indigo-50 p-3 rounded-3xl border border-indigo-100">
-                        <input type="text" id="new-group-input" placeholder="ระบุชื่อทีมใหม่..." class="flex-1 bg-transparent px-4 py-2 outline-none font-bold text-indigo-900">
-                        <button onclick="addGroup()" class="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">
-                            <i data-lucide="plus"></i>
-                        </button>
+                        <input type="text" id="new-group-input" placeholder="เพิ่มชื่อทีม..." class="flex-1 bg-transparent px-4 py-2 outline-none font-bold text-indigo-900">
+                        <button onclick="addGroup()" class="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all"><i data-lucide="plus"></i></button>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. Random Screen (Dices) -->
+            <!-- 4. Random Screen -->
             <div id="stage-random" class="stage-content flex-col p-4 md:p-8 items-center justify-center">
                 <div class="w-full max-w-md bg-white rounded-[40px] p-10 shadow-sm border border-indigo-50 text-center relative">
                     <div class="flex justify-between items-center mb-8">
-                        <div class="text-left">
-                            <h3 class="text-2xl font-black text-indigo-900">สุ่มตัวเลข</h3>
-                            <p id="random-status-text" class="text-[10px] text-gray-400 font-bold uppercase">Ready</p>
-                        </div>
+                        <h3 class="text-2xl font-black text-indigo-900">สุ่มหมายเลข</h3>
                         <div class="bg-gray-100 px-4 py-2 rounded-2xl flex items-center gap-3 border">
                             <span class="text-[10px] font-black text-gray-500 uppercase">ห้ามซ้ำ</span>
-                            <label class="switch">
-                                <input type="checkbox" id="no-repeat" onchange="resetDrawn()">
-                                <span class="slider"></span>
-                            </label>
+                            <label class="switch"><input type="checkbox" id="no-repeat" onchange="resetDrawn()"><span class="slider"></span></label>
                         </div>
                     </div>
                     <div class="relative mb-10">
-                        <div id="rand-display" class="text-9xl leading-none font-black text-indigo-600 py-12 bg-gray-50 rounded-[40px] shadow-inner border border-gray-100">--</div>
+                        <div id="rand-display" class="text-9xl font-black text-indigo-600 py-12 bg-gray-50 rounded-[40px] shadow-inner border border-gray-100">--</div>
                         <div id="drawn-indicator" class="absolute -top-3 -right-3 bg-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-black shadow-lg border-2 border-white hidden">0/0</div>
                     </div>
                     <div class="grid grid-cols-2 gap-4 mb-8">
-                        <div class="bg-white p-3 rounded-2xl border">
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">เริ่มต้น</label>
-                            <input type="number" id="min-val" value="1" class="w-full text-center bg-transparent font-black text-2xl outline-none">
-                        </div>
-                        <div class="bg-white p-3 rounded-2xl border">
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">สิ้นสุด</label>
-                            <input type="number" id="max-val" value="40" class="w-full text-center bg-transparent font-black text-2xl outline-none">
-                        </div>
+                        <input type="number" id="min-val" value="1" class="w-full text-center bg-gray-50 p-3 rounded-2xl font-black text-2xl border">
+                        <input type="number" id="max-val" value="40" class="w-full text-center bg-gray-50 p-3 rounded-2xl font-black text-2xl border">
                     </div>
                     <div class="flex gap-4">
-                        <button onclick="spin()" class="flex-1 bg-indigo-600 text-white py-5 rounded-3xl font-black shadow-xl hover:bg-indigo-700 active:scale-95 transition-all text-xl">สุ่มหมายเลข!</button>
-                        <button onclick="resetDrawn()" class="p-5 bg-gray-100 rounded-3xl text-gray-400 hover:bg-gray-200 transition-all border"><i data-lucide="rotate-ccw"></i></button>
+                        <button onclick="spin()" class="flex-1 bg-indigo-600 text-white py-5 rounded-3xl font-black shadow-xl hover:bg-indigo-700 transition-all text-xl">สุ่มเลย!</button>
+                        <button onclick="resetDrawn()" class="p-5 bg-gray-100 rounded-3xl text-gray-400 hover:bg-gray-200 border"><i data-lucide="rotate-ccw"></i></button>
                     </div>
                 </div>
             </div>
 
         </main>
 
-        <!-- Navigation Bar (Bottom) -->
+        <!-- Navigation Bar -->
         <nav class="p-3 md:p-4 bg-white border-t flex justify-around items-center shadow-2xl z-20">
-            <button onclick="switchTab('play')" id="tab-play" class="tool-btn active"><i data-lucide="gamepad-2"></i><span class="text-[9px] font-black mt-1">GAME</span></button>
-            <button onclick="switchTab('board')" id="tab-board" class="tool-btn"><i data-lucide="edit-3"></i><span class="text-[9px] font-black mt-1">BOARD</span></button>
-            <button onclick="switchTab('scores')" id="tab-scores" class="tool-btn"><i data-lucide="trophy"></i><span class="text-[9px] font-black mt-1">SCORES</span></button>
-            <button onclick="switchTab('random')" id="tab-random" class="tool-btn"><i data-lucide="hash"></i><span class="text-[9px] font-black mt-1">RANDOM</span></button>
+            <button onclick="switchTab('play')" id="tab-play" class="tool-btn active"><i data-lucide="gamepad-2"></i><span class="text-[9px] font-black mt-1 uppercase">GAME</span></button>
+            <button onclick="switchTab('board')" id="tab-board" class="tool-btn"><i data-lucide="edit-3"></i><span class="text-[9px] font-black mt-1 uppercase">BOARD</span></button>
+            <button onclick="switchTab('scores')" id="tab-scores" class="tool-btn"><i data-lucide="trophy"></i><span class="text-[9px] font-black mt-1 uppercase">SCORES</span></button>
+            <button onclick="switchTab('random')" id="tab-random" class="tool-btn"><i data-lucide="hash"></i><span class="text-[9px] font-black mt-1 uppercase">RANDOM</span></button>
         </nav>
 
     </div>
@@ -244,30 +236,30 @@
         // --- Full Data Pool ---
         const idiomsData = [
             { name: "กงเกวียนกำเกวียน", hint: "เวรกรรมตามทันเหมือนล้อเกวียนที่หมุนตามรอยกันไป", emoji: "🎡" },
-            { name: "กบเลือกนาย", hint: "ไม่ควรเรียกร้องต้องการสิ่งต่าง ๆ ให้มากเกินไปจนเดือดร้อน", emoji: "🐸" },
+            { name: "กบเลือกนาย", hint: "ไม่พอใจในสิ่งที่ตนมีอยู่จนเรียกร้องมากเกินควร", emoji: "🐸" },
             { name: "กบในกะลาครอบ", hint: "คนที่มีความรู้น้อยแต่ชอบอวดตัวว่ามีความรู้มาก", emoji: "🐚" },
-            { name: "กตัญญูกตเวที", hint: "การรู้จักบุญคุณและตอบแทนผู้มีพระคุณ", emoji: "🙏" },
             { name: "กระต่ายตื่นตูม", hint: "ตื่นตกใจในเรื่องที่ยังไม่รู้ข้อเท็จจริงจนวุ่นวาย", emoji: "🐰" },
             { name: "ขว้างงูไม่พ้นคอ", hint: "ทำอะไรที่ผลร้ายย้อนกลับมาสู่ตนเอง", emoji: "🐍" },
-            { name: "ขิงก็รา ข่าก็แรง", hint: "คนสองคนที่อารมณ์ร้อนพอๆ กัน ไม่ยอมลดละให้กัน", emoji: "🌶️" },
-            { name: "ขี่ช้างจับตั๊กแตน", hint: "ลงทุนลงแรงมากเกินไปเพื่อให้ได้ผลตอบแทนเพียงเล็กน้อย", emoji: "🐘" },
-            { name: "เขียนด้วยมือ ลบด้วยเท้า", hint: "สอนไม่ให้ทำลายคุณงามความดีที่เคยสร้างมาด้วยการกระทำที่ไม่ดีในภายหลัง", emoji: "✍️" },
+            { name: "ขิงก็รา ข่าก็แรง", hint: "คนสองคนที่อารมณ์ร้อนพอๆ กัน ไม่ยอมกัน", emoji: "🌶️" },
+            { name: "ขี่ช้างจับตั๊กแตน", hint: "ลงทุนลงแรงมากเกินไปเพื่อให้ได้ผลตอบแทนเพียงนิดเดียว", emoji: "🐘" },
+            { name: "เขียนด้วยมือ ลบด้วยเท้า", hint: "ทำลายคุณงามความดีที่สร้างมาด้วยการกระทำไม่ดีในภายหลัง", emoji: "✍️" },
             { name: "ดินพอกหางหมู", hint: "งานที่คั่งค้างสะสมไว้เรื่อยๆ จนลำบากตอนท้าย", emoji: "🐷" },
-            { name: "เดินตามผู้ใหญ่หมาไม่กัด", hint: "ประพฤติตามผู้ใหญ่ย่อมปลอดภัยและไม่ผิดพลาด", emoji: "🐕" },
-            { name: "ตบมือข้างเดียวไม่ดัง", hint: "เรื่องราวที่เกิดขึ้นย่อมต้องมีสาเหตุมาจากทั้งสองฝ่าย", emoji: "👏" },
-            { name: "ตนเป็นที่พึ่งแห่งตน", hint: "สอนให้รู้จักพึ่งพาความสามารถของตนเองเป็นอันดับแรก", emoji: "🧘" },
-            { name: "น้ำขึ้นให้รีบตัก", hint: "เมื่อมีโอกาสดีเข้ามา ควรรีบคว้าไว้และใช้ให้เกิดประโยชน์", emoji: "🌊" },
+            { name: "ตบมือข้างเดียวไม่ดัง", hint: "เรื่องราวย่อมมีสาเหตุมาจากทั้งสองฝ่าย", emoji: "👏" },
+            { name: "น้ำขึ้นให้รีบตัก", hint: "เมื่อมีโอกาสดีเข้ามา ควรรีบคว้าไว้และใช้ประโยชน์", emoji: "🌊" },
             { name: "ปลาหมอตายเพราะปาก", hint: "พูดจาไม่ระวังจนนำภัยมาสู่ตนเอง", emoji: "👄" },
-            { name: "ฝนทั่งให้เป็นเข็ม", hint: "ความเพียรพยายามอย่างยิ่งยวดเพื่อทำงานใหญ่ให้สำเร็จ", emoji: "🧵" },
-            { name: "วัวหายล้อมคอก", hint: "คิดป้องกันเมื่อเกิดความเสียหายขึ้นแล้ว ซึ่งมักจะไม่ทันการณ์", emoji: "🐄" },
-            { name: "สี่ตีนยังรู้พลาด นักปราชญ์ยังรู้พลั้ง", hint: "ทุกคนย่อมทำความผิดพลาดกันได้ ไม่ว่าจะเก่งเพียงใด", emoji: "🐎" },
-            { name: "หนีเสือปะจระเข้", hint: "หนีอันตรายหนึ่งไปเจออันตรายที่ร้ายแรงกว่า", emoji: "🐊" },
-            { name: "ออมเปรี้ยวไว้กินหวาน", hint: "ยอมอดทนรอคอยในปัจจุบันเพื่อผลลัพธ์ที่ดีกว่าในอนาคต", emoji: "🍬" }
+            { name: "วัวหายล้อมคอก", hint: "คิดป้องกันเมื่อเกิดความเสียหายขึ้นแล้ว ซึ่งมักจะไม่ทันการ", emoji: "🐄" },
+            { name: "เห็นช้างขี้ ขี้ตามช้าง", hint: "ทำเลียนแบบคนรวยหรือคนใหญ่คนโตโดยไม่ดูฐานะตน", emoji: "🐘" },
+            { name: "หัวล้านได้หวี", hint: "ได้ของที่มีค่าแต่ไม่สามารถนำไปใช้ประโยชน์กับตนเองได้", emoji: "👨‍🦲" },
+            { name: "ไก่เห็นตีนงู งูเห็นนมไก่", hint: "ต่างฝ่ายต่างรู้ความลับหรือเล่ห์เหลี่ยมของกันและกัน", emoji: "🐔" },
+            { name: "ปากว่าตาขยิบ", hint: "พูดอย่างหนึ่งแต่ทำอีกอย่างหนึ่ง หรือทำไม่ตรงกับที่พูด", emoji: "😉" },
+            { name: "มือไม่พายเอาเท้าราน้ำ", hint: "ไม่ช่วยงานแล้วยังขัดขวางหรือทำให้งานลำบากขึ้น", emoji: "🛶" }
         ];
 
         // --- Core State ---
         let currentIdx = 0, gameScore = 0, timeLeft = 20, timerId = null, quizPool = [];
         let drawnNums = [], eraserMode = false, painting = false;
+        let gameMode = 'single'; // 'single' or 'team'
+        let activeGroupIdx = null;
         let groups = [
             {name: "ทีมมังกร", score: 0, color: "bg-rose-500"}, 
             {name: "ทีมหงส์", score: 0, color: "bg-sky-500"},
@@ -287,21 +279,63 @@
         function renderHeader() {
             const h = document.getElementById('header-group-scores');
             h.innerHTML = '';
-            [...groups].sort((a,b)=>b.score-a.score).forEach(g=>{
+            [...groups].sort((a,b)=>b.score-a.score).forEach((g, idx)=>{
                 const b = document.createElement('div');
-                b.className = `flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-[11px] font-black shadow-sm shrink-0 border border-white/20 ${g.color}`;
+                b.id = `badge-${idx}`;
+                b.className = `group-score-badge flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-[11px] font-black shadow-sm shrink-0 border border-white/20 ${g.color}`;
                 b.innerHTML = `<span>${g.name}</span><span class="bg-black/20 px-1.5 rounded-lg">${g.score}</span>`;
                 h.appendChild(b);
             });
         }
 
-        // --- Quiz Engine ---
-        function startGame() {
-            gameScore = 0; currentIdx = 0;
-            quizPool = [...idiomsData].sort(() => Math.random() - 0.5).slice(0, 10);
+        // --- Game Engine ---
+        function initMode(mode) {
+            gameMode = mode;
             document.getElementById('start-area').classList.add('hidden');
-            document.getElementById('result-area').classList.add('hidden');
+            if(mode === 'team') {
+                showTeamTurnSelector();
+            } else {
+                startActualQuiz();
+            }
+        }
+
+        function showTeamTurnSelector() {
+            document.getElementById('quiz-area').classList.add('hidden');
+            document.getElementById('team-turn-area').classList.remove('hidden');
+            const grid = document.getElementById('team-selector-grid');
+            grid.innerHTML = '';
+            groups.forEach((g, i) => {
+                const b = document.createElement('button');
+                b.className = `${g.color} text-white p-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all text-sm`;
+                b.innerText = g.name;
+                b.onclick = () => {
+                    activeGroupIdx = i;
+                    startActualQuiz();
+                };
+                grid.appendChild(b);
+            });
+        }
+
+        function startActualQuiz() {
+            if (currentIdx === 0) {
+                quizPool = [...idiomsData].sort(() => Math.random() - 0.5).slice(0, 10);
+                gameScore = 0;
+            }
+            document.getElementById('team-turn-area').classList.add('hidden');
             document.getElementById('quiz-area').classList.remove('hidden');
+            
+            if (gameMode === 'team') {
+                const indicator = document.getElementById('turn-indicator');
+                indicator.classList.remove('hidden');
+                indicator.innerText = `Turn: ${groups[activeGroupIdx].name}`;
+                indicator.className = `px-3 py-1 ${groups[activeGroupIdx].color} text-white text-[10px] font-black rounded-lg uppercase`;
+                document.getElementById('mode-label').innerText = "คะแนนกลุ่มปัจจุบัน";
+                document.getElementById('global-game-score').innerText = groups[activeGroupIdx].score;
+            } else {
+                document.getElementById('turn-indicator').classList.add('hidden');
+                document.getElementById('mode-label').innerText = "คะแนนสะสม";
+                document.getElementById('global-game-score').innerText = gameScore;
+            }
             loadQuiz();
         }
 
@@ -312,21 +346,34 @@
             document.getElementById('q-hint').innerText = q.hint;
             document.getElementById('q-emoji').innerText = q.emoji;
             document.getElementById('game-progress-bar').style.width = `${(currentIdx/10)*100}%`;
-            document.getElementById('current-score-display').innerText = `คะแนน: ${gameScore}`;
 
+            // Logic for Better Distractors
             let opts = [q.name];
-            let pool = idiomsData.filter(i => i.name !== q.name);
-            opts.push(...pool.sort(() => Math.random() - 0.5).slice(0, 3).map(i => i.name));
+            // Filter pool to find idioms that share the same first character (likely distractors)
+            let closeMatchPool = idiomsData.filter(i => i.name !== q.name && i.name.charAt(0) === q.name.charAt(0));
+            let otherPool = idiomsData.filter(i => i.name !== q.name && i.name.charAt(0) !== q.name.charAt(0));
+            
+            // Add close matches first, then fill with random
+            opts.push(...closeMatchPool.sort(() => Math.random() - 0.5).slice(0, 2).map(i => i.name));
+            while(opts.length < 4) {
+                let randomIdiom = otherPool.sort(() => Math.random() - 0.5).pop().name;
+                if(!opts.includes(randomIdiom)) opts.push(randomIdiom);
+            }
             opts.sort(() => Math.random() - 0.5);
 
             const grid = document.getElementById('options-grid');
             grid.innerHTML = '';
-            const styles = ['bg-blue-50 text-blue-700', 'bg-emerald-50 text-emerald-700', 'bg-amber-50 text-amber-700', 'bg-rose-50 text-rose-700'];
+            const styles = [
+                'bg-blue-50 border-blue-200 text-blue-700', 
+                'bg-emerald-50 border-emerald-200 text-emerald-700', 
+                'bg-amber-50 border-amber-200 text-amber-700', 
+                'bg-rose-50 border-rose-200 text-rose-700'
+            ];
             opts.forEach((opt, i) => {
                 const b = document.createElement('button');
-                b.className = `p-4 md:p-6 border-2 border-transparent rounded-3xl font-black transition-all active:scale-95 shadow-sm text-sm md:text-lg ${styles[i]}`;
+                b.className = `choice-btn ${styles[i]}`;
                 b.innerText = opt;
-                b.onclick = () => check(opt, q.name);
+                b.onclick = () => checkAns(opt, q.name);
                 grid.appendChild(b);
             });
             startT();
@@ -337,48 +384,79 @@
             const el = document.getElementById('timer-text');
             timerId = setInterval(() => {
                 timeLeft -= 0.1; el.innerText = Math.ceil(timeLeft);
-                if(timeLeft <= 0) check(null, quizPool[currentIdx].name);
+                if(timeLeft <= 0) checkAns(null, quizPool[currentIdx].name);
             }, 100);
         }
 
-        function check(sel, cor) {
+        function checkAns(sel, cor) {
             clearInterval(timerId);
             const btns = document.querySelectorAll('#options-grid button');
             btns.forEach(b => {
                 b.disabled = true;
-                if(b.innerText === cor) b.className = "p-4 md:p-6 bg-green-500 text-white rounded-3xl font-black shadow-lg scale-105 z-10";
-                else if(b.innerText === sel) b.className = "p-4 md:p-6 bg-red-500 text-white rounded-3xl font-black opacity-60";
+                if(b.innerText === cor) b.className = "choice-btn bg-green-500 text-white border-green-600 scale-105 z-10";
+                else if(b.innerText === sel) b.className = "choice-btn bg-red-500 text-white border-red-600 opacity-60";
+                else b.className = "choice-btn bg-gray-100 text-gray-400 border-gray-200 opacity-40";
             });
-            if(sel === cor) gameScore += Math.ceil(timeLeft) * 10;
-            setTimeout(() => { currentIdx++; loadQuiz(); }, 2000);
+
+            if(sel === cor) {
+                const points = Math.ceil(timeLeft) * 10;
+                if(gameMode === 'team') {
+                    groups[activeGroupIdx].score += points;
+                    document.getElementById('global-game-score').innerText = groups[activeGroupIdx].score;
+                    renderScores();
+                    // Visual feedback for score update
+                    const badge = document.getElementById(`header-group-scores`).querySelector(`div:nth-child(${activeGroupIdx + 1})`);
+                    if(badge) { badge.classList.add('updated'); setTimeout(() => badge.classList.remove('updated'), 600); }
+                } else {
+                    gameScore += points;
+                    document.getElementById('global-game-score').innerText = gameScore;
+                }
+            }
+
+            setTimeout(() => {
+                currentIdx++;
+                if(currentIdx < 10 && gameMode === 'team') {
+                    showTeamTurnSelector();
+                } else {
+                    loadQuiz();
+                }
+            }, 2000);
         }
 
         function endQuiz() {
             document.getElementById('quiz-area').classList.add('hidden');
             document.getElementById('result-area').classList.remove('hidden');
-            document.getElementById('final-game-score').innerText = gameScore;
+            const card = document.getElementById('result-stat-card');
+            if(gameMode === 'team') {
+                card.innerHTML = `<p class="text-gray-400 font-bold text-sm uppercase mb-2">แข่งขันจบแล้ว!</p>
+                                  <div class="space-y-2">` + 
+                                  groups.map(g => `<div class="flex justify-between gap-8"><span class="font-bold">${g.name}</span><span class="font-black text-indigo-600">${g.score}</span></div>`).join('') 
+                                  + `</div>`;
+            } else {
+                card.innerHTML = `<p class="text-gray-400 font-bold text-sm uppercase mb-1">คะแนนของคุณ</p>
+                                  <p class="text-7xl font-black text-indigo-600">${gameScore}</p>`;
+            }
         }
 
         function resetGame() {
+            currentIdx = 0; gameScore = 0;
             document.getElementById('result-area').classList.add('hidden');
             document.getElementById('start-area').classList.remove('hidden');
+            document.getElementById('game-progress-bar').style.width = "0%";
         }
 
         // --- Canvas Engine ---
         const canvas = document.getElementById('drawing-canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
         function initCanvas() {
             const box = canvas.parentElement;
             if(canvas.width !== box.clientWidth) {
                 const data = ctx.getImageData(0,0,Math.max(1,canvas.width), Math.max(1,canvas.height));
-                canvas.width = box.clientWidth;
-                canvas.height = box.clientHeight;
+                canvas.width = box.clientWidth; canvas.height = box.clientHeight;
                 ctx.lineCap = 'round'; ctx.lineJoin = 'round';
                 ctx.putImageData(data, 0, 0);
             }
         }
-
         function d(e) {
             if(!painting) return;
             const r = canvas.getBoundingClientRect();
@@ -388,7 +466,6 @@
             ctx.strokeStyle = eraserMode ? '#FFFFFF' : document.getElementById('pen-color').value;
             ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
         }
-
         canvas.addEventListener('mousedown', (e)=>{ painting=true; d(e); });
         canvas.addEventListener('mousemove', d);
         canvas.addEventListener('mouseup', ()=>{ painting=false; ctx.beginPath(); });
@@ -398,9 +475,8 @@
         function clearCanvas() { ctx.clearRect(0,0,canvas.width,canvas.height); }
         function setEraser() {
             eraserMode = !eraserMode;
-            const b = document.getElementById('eraser-btn');
-            b.classList.toggle('bg-indigo-600', eraserMode);
-            b.classList.toggle('text-white', eraserMode);
+            document.getElementById('eraser-btn').classList.toggle('bg-indigo-600', eraserMode);
+            document.getElementById('eraser-btn').classList.toggle('text-white', eraserMode);
         }
 
         // --- Scoreboard ---
@@ -411,7 +487,6 @@
             groups.push({name: inp.value.trim(), score: 0, color: clrs[groups.length % clrs.length]});
             inp.value = ''; renderScores();
         }
-
         function renderScores() {
             const list = document.getElementById('groups-list');
             list.innerHTML = '';
@@ -419,23 +494,19 @@
                 const row = document.createElement('div');
                 row.className = "flex items-center justify-between p-4 bg-gray-50 rounded-[28px] border border-gray-100";
                 row.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-3 h-3 rounded-full ${g.color}"></div>
-                        <span class="font-bold text-gray-700">${g.name}</span>
-                    </div>
+                    <div class="flex items-center gap-3"><div class="w-3 h-3 rounded-full ${g.color}"></div><span class="font-bold text-gray-700">${g.name}</span></div>
                     <div class="flex items-center gap-3">
                         <button onclick="upScore(${i},-10)" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl text-red-500 font-black shadow-sm">-</button>
                         <span class="text-2xl font-black text-indigo-900 w-10 text-center">${g.score}</span>
                         <button onclick="upScore(${i},10)" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl text-green-500 font-black shadow-sm">+</button>
                         <button onclick="delG(${i})" class="ml-2 text-gray-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `;
+                    </div>`;
                 list.appendChild(row);
             });
             lucide.createIcons(); renderHeader();
         }
         function upScore(i, v) { groups[i].score = Math.max(0, groups[i].score + v); renderScores(); }
-        function delG(i) { groups.splice(i, 1); renderScores(); }
+        function delG(i) { if(groups.length > 1) { groups.splice(i, 1); renderScores(); } }
 
         // --- Randomizer ---
         function resetDrawn() { drawnNums = []; document.getElementById('rand-display').innerText = '--'; upDrawInd(); }
@@ -456,23 +527,15 @@
                 if(++c > 12) {
                     clearInterval(t);
                     let val;
-                    if(noR) {
-                        do { val = Math.floor(Math.random() * (max - min + 1)) + min; } 
-                        while(drawnNums.includes(val));
-                        drawnNums.push(val);
-                    } else val = Math.floor(Math.random() * (max - min + 1)) + min;
+                    if(noR) { do { val = Math.floor(Math.random() * (max - min + 1)) + min; } while(drawnNums.includes(val)); drawnNums.push(val); } 
+                    else val = Math.floor(Math.random() * (max - min + 1)) + min;
                     res.innerText = val; upDrawInd();
                 }
             }, 60);
         }
 
-        // Initialize Everything
         window.addEventListener('resize', initCanvas);
-        setTimeout(() => {
-            lucide.createIcons();
-            renderScores();
-            initCanvas();
-        }, 100);
+        setTimeout(() => { lucide.createIcons(); renderScores(); initCanvas(); }, 100);
     </script>
 </body>
 </html>
