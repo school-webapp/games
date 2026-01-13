@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เกมทายสำนวนไทย - Pro Dashboard v4.9</title>
+    <title>เกมทายสำนวนไทย - Pro Dashboard v5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
@@ -40,68 +41,46 @@
             to { opacity: 1; transform: translateY(0); }
         }
         #drawing-canvas { touch-action: none; cursor: crosshair; }
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #cbd5e1; transition: .4s; border-radius: 20px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: #f97316; }
-        input:checked + .slider:before { transform: translateX(22px); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
         .choice-btn {
             @apply p-4 border-2 rounded-2xl font-black transition-all active:scale-95 shadow-sm text-sm md:text-base text-left relative overflow-hidden bg-white hover:bg-indigo-50 border-indigo-50;
         }
-        .timer-progress {
-            transition: width 0.1s linear;
-        }
+        .timer-progress { transition: width 0.1s linear; }
         
-        /* Podium Styles */
+        /* Podium System */
         .podium-item {
-            @apply flex flex-col items-center justify-end transition-all duration-1000 ease-out flex-1 min-w-0;
+            @apply flex flex-col items-center justify-end transition-all duration-1000 ease-out flex-1;
+            min-width: 80px;
         }
         .podium-base {
             @apply w-full rounded-t-2xl flex flex-col items-center justify-center text-white font-black shadow-lg relative;
+            transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .podium-1 { height: 160px; @apply bg-gradient-to-b from-yellow-400 to-yellow-600; }
-        .podium-2 { height: 120px; @apply bg-gradient-to-b from-slate-300 to-slate-500; }
-        .podium-3 { height: 85px; @apply bg-gradient-to-b from-orange-400 to-orange-700; }
-
+        /* Dynamic Podium Colors */
+        .rank-1 { @apply bg-gradient-to-b from-yellow-300 to-yellow-600; }
+        .rank-2 { @apply bg-gradient-to-b from-slate-300 to-slate-500; }
+        .rank-3 { @apply bg-gradient-to-b from-orange-400 to-orange-700; }
+        
         .crown-icon {
-            @apply absolute -top-10 text-4xl animate-bounce;
-            animation-duration: 2s;
+            @apply absolute -top-12 text-5xl animate-bounce;
         }
-
-        /* Reordering animation for badges */
-        .group-score-badge { transition: all 0.5s ease; }
     </style>
 </head>
 <body class="p-2 md:p-4">
 
     <div class="glass w-full max-w-5xl h-[95vh] flex flex-col overflow-hidden relative border border-white/20">
         
-        <!-- Header -->
         <header class="p-4 border-b flex flex-col md:flex-row justify-between items-center bg-white/80 backdrop-blur-md z-10 shrink-0 gap-3">
             <div class="flex items-center gap-3 shrink-0">
                 <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg">
                     <i data-lucide="graduation-cap"></i>
                 </div>
-                <div class="hidden sm:block">
+                <div>
                     <h1 class="text-lg font-black text-indigo-900 leading-none">สำนวนไทยดิจิทัล</h1>
-                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Classroom Ultimate v4.9</p>
+                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">Classroom Ultimate v5.0</p>
                 </div>
             </div>
 
-            <!-- Leaderboard Bar (Auto-Sorted) -->
-            <div id="header-group-scores" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 px-2 bg-indigo-50/50 rounded-2xl border border-indigo-100 max-w-full">
-                <!-- Sorted Badges appear here -->
-            </div>
+            <div id="header-group-scores" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 px-2 bg-indigo-50/50 rounded-2xl border border-indigo-100 max-w-full"></div>
 
             <div class="flex items-center gap-4 border-l pl-4 shrink-0">
                 <div class="text-right">
@@ -111,298 +90,149 @@
             </div>
         </header>
 
-        <!-- Main Content Area -->
         <main class="flex-1 overflow-hidden relative bg-gray-50/30">
             
-            <!-- 1. Play Stage -->
             <div id="stage-play" class="stage-content active flex-col items-center p-4 md:p-8 overflow-y-auto">
                 
-                <!-- Start Area -->
                 <div id="start-area" class="text-center space-y-8 my-auto">
                     <div class="text-8xl md:text-9xl animate-bounce">🐘</div>
-                    <div>
-                        <h2 class="text-3xl md:text-4xl font-black text-gray-800 mb-2">เลือกโหมดการเล่น</h2>
-                        <p class="text-gray-500 font-medium">สุ่มทายสำนวน | 60 วินาที | คะแนนตามเวลา</p>
-                    </div>
+                    <h2 class="text-3xl md:text-4xl font-black text-gray-800">ทายสำนวนจาก Emoji</h2>
                     <div class="flex flex-col md:flex-row gap-4 justify-center">
-                        <button onclick="initMode('single')" class="bg-white border-2 border-indigo-100 text-indigo-600 px-10 py-5 rounded-3xl text-xl font-black shadow-lg hover:border-indigo-600 transition-all flex items-center gap-3">
-                            <i data-lucide="user"></i> เล่นคนเดียว
-                        </button>
-                        <button onclick="initMode('team')" class="bg-indigo-600 text-white px-10 py-5 rounded-3xl text-xl font-black shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3">
-                            <i data-lucide="users"></i> สลับกลุ่มตอบ
-                        </button>
+                        <button onclick="initMode('single')" class="bg-white border-2 border-indigo-100 text-indigo-600 px-10 py-5 rounded-3xl text-xl font-black shadow-lg hover:border-indigo-600 transition-all">เล่นคนเดียว</button>
+                        <button onclick="initMode('team')" class="bg-indigo-600 text-white px-10 py-5 rounded-3xl text-xl font-black shadow-xl hover:bg-indigo-700 transition-all">เล่นเป็นทีม</button>
                     </div>
                 </div>
 
-                <!-- Team Selection Area -->
                 <div id="team-turn-area" class="text-center space-y-8 hidden my-auto w-full max-w-2xl">
-                    <div class="flex justify-between items-center mb-4 px-2">
-                        <h2 class="text-2xl md:text-3xl font-black text-gray-800 text-left leading-tight">กลุ่มใดจะตอบ<br class="sm:hidden"><span class="text-indigo-600 font-extrabold">ข้อต่อไป?</span></h2>
-                        <button onclick="forceEndGame()" class="text-red-500 hover:bg-red-50 p-3 rounded-2xl flex items-center gap-2 text-xs font-bold border border-red-100 transition-all shadow-sm">
-                            <i data-lucide="award"></i> สรุปอันดับทันที
-                        </button>
-                    </div>
+                    <h2 class="text-3xl font-black">ตาของกลุ่มใด?</h2>
                     <div id="team-selector-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
                 </div>
 
-                <!-- Quiz Area -->
-                <div id="quiz-area" class="w-full max-w-3xl hidden py-2">
+                <div id="quiz-area" class="w-full max-w-2xl hidden py-2">
                     <div class="flex justify-between items-center mb-3">
-                        <div class="text-left shrink-0">
-                            <span id="q-num-text" class="text-indigo-600 font-black text-xs md:text-sm uppercase bg-indigo-50 px-3 py-1 rounded-full">ข้อที่ 01/10</span>
-                            <div id="turn-indicator" class="mt-2 hidden px-3 py-1 text-white text-[10px] font-black rounded-lg uppercase"></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="flex flex-col items-end">
-                                <div class="flex items-center gap-2 text-red-500">
-                                    <i data-lucide="clock" class="w-5 h-5 md:w-6 md:h-6"></i>
-                                    <span id="timer-text" class="text-2xl md:text-3xl font-black tabular-nums">60</span>
-                                </div>
-                            </div>
-                            <button onclick="forceEndGame()" class="bg-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl border border-gray-200" title="ยุติเกมทันที">
-                                <i data-lucide="x" class="w-5 h-5"></i>
-                            </button>
+                        <span id="q-num-text" class="text-indigo-600 font-black text-xs bg-indigo-50 px-3 py-1 rounded-full">ข้อที่ 01/10</span>
+                        <div class="flex items-center gap-2 text-red-500">
+                            <i data-lucide="clock"></i>
+                            <span id="timer-text" class="text-2xl font-black">60</span>
                         </div>
                     </div>
                     
-                    <div class="w-full bg-gray-200 h-1.5 rounded-full mb-5 overflow-hidden">
+                    <div class="w-full bg-gray-200 h-2 rounded-full mb-8 overflow-hidden">
                         <div id="timer-bar" class="timer-progress h-full bg-red-500" style="width: 100%"></div>
                     </div>
 
-                    <div class="mb-5 bg-white p-6 md:p-10 rounded-[32px] shadow-sm border border-indigo-50 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-2 h-full bg-indigo-500/20"></div>
-                        <div id="q-emoji" class="text-6xl md:text-7xl mb-2 drop-shadow-sm text-center text-indigo-600">💡</div>
-                        <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1 text-center">คำใบ้ความหมาย...</p>
-                        <p id="q-hint" class="text-xl md:text-2xl font-extrabold text-gray-800 leading-snug text-center"></p>
+                    <div class="mb-8 bg-white p-12 rounded-[40px] shadow-sm border border-indigo-50 text-center">
+                        <div id="q-emoji" class="text-[100px] md:text-[120px] drop-shadow-xl animate-pulse">💡</div>
+                        <p id="turn-indicator" class="mt-6 font-bold text-indigo-400"></p>
                     </div>
                     
-                    <div id="options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full"></div>
+                    <div id="options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full"></div>
                 </div>
 
-                <!-- Reward Ceremony Screen (Fixed) -->
                 <div id="result-area" class="w-full hidden flex-col items-center py-6 my-auto">
-                    <h2 class="text-4xl font-black text-indigo-900 mb-8 text-center tracking-tight">🏆 ทำเนียบแชมป์ 🏆</h2>
+                    <h2 class="text-5xl font-black text-indigo-900 mb-12 text-center italic">CONGRATULATIONS!</h2>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full max-w-5xl px-4 items-end">
-                        <!-- Podium Section -->
-                        <div class="lg:col-span-8 flex flex-col items-center">
-                            <div id="podium-container" class="flex items-end justify-center gap-2 sm:gap-4 w-full h-72 mb-4 px-2">
-                                <!-- Podium columns injected via JS -->
-                            </div>
+                    <div id="podium-container" class="flex items-end justify-center gap-2 sm:gap-6 w-full max-w-4xl h-80 mb-12 px-4">
                         </div>
 
-                        <!-- Side List (Ranks 4+) -->
-                        <div class="lg:col-span-4 self-stretch">
-                            <div class="bg-white p-6 rounded-[32px] shadow-xl border border-indigo-50 h-full flex flex-col">
-                                <h3 class="font-black text-indigo-300 uppercase text-[10px] tracking-widest mb-4 flex items-center gap-2">
-                                    <i data-lucide="list-ordered" class="w-3 h-3"></i> อันดับกลุ่มอื่น
-                                </h3>
-                                <div id="result-side-list" class="space-y-2 overflow-y-auto max-h-[300px] pr-2 no-scrollbar">
-                                    <!-- List items -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-10">
-                        <button onclick="resetGame()" class="bg-indigo-600 text-white px-12 py-4 rounded-2xl font-black shadow-xl hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-3">
-                            <i data-lucide="home" class="w-5 h-5"></i> กลับไปเริ่มต้นใหม่
-                        </button>
-                    </div>
+                    <button onclick="resetGame()" class="bg-indigo-600 text-white px-12 py-4 rounded-2xl font-black shadow-xl hover:scale-105 transition-all">เล่นใหม่อีกครั้ง</button>
                 </div>
             </div>
 
-            <!-- 2. Board Stage -->
-            <div id="stage-board" class="stage-content flex-col bg-white">
-                <div class="p-3 border-b flex items-center justify-between bg-gray-50/80">
-                    <div class="flex items-center gap-3">
-                        <input type="color" id="pen-color" value="#4f46e5" class="w-10 h-10 rounded-xl cursor-pointer border-none bg-transparent">
-                        <input type="range" id="pen-size" min="2" max="60" value="8" class="w-24 md:w-48 accent-indigo-600">
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="setEraser()" id="eraser-btn" class="p-3 rounded-xl text-gray-400 hover:bg-gray-100 border shadow-sm"><i data-lucide="eraser"></i></button>
-                        <button onclick="clearCanvas()" class="p-3 rounded-xl text-red-500 hover:bg-red-50 border shadow-sm"><i data-lucide="trash-2"></i></button>
-                    </div>
-                </div>
-                <div class="flex-1 relative bg-gray-50">
-                    <canvas id="drawing-canvas"></canvas>
-                </div>
-            </div>
-
-            <!-- 3. Scores Stage -->
+            <div id="stage-board" class="stage-content flex-col bg-white">...</div>
             <div id="stage-scores" class="stage-content flex-col p-4 md:p-8 items-center overflow-y-auto">
-                <div class="w-full max-w-lg bg-white rounded-[40px] p-6 md:p-10 shadow-sm border border-indigo-100 my-auto">
-                    <h3 class="text-2xl font-black text-indigo-900 mb-6 flex items-center gap-2"><i data-lucide="users"></i> จัดการทีม</h3>
+                <div class="w-full max-w-lg bg-white rounded-[40px] p-6 shadow-sm border my-auto">
+                    <h3 class="text-2xl font-black mb-6">รายชื่อทีม</h3>
                     <div id="groups-list" class="space-y-2 mb-6"></div>
-                    <div class="flex gap-2 bg-indigo-50 p-2 rounded-2xl border border-indigo-100">
-                        <input type="text" id="new-group-input" placeholder="ระบุชื่อทีม..." class="flex-1 bg-transparent px-4 py-2 outline-none font-bold text-indigo-900">
-                        <button onclick="addGroup()" class="bg-indigo-600 text-white px-5 py-2 rounded-2xl font-bold shadow-lg"><i data-lucide="plus"></i></button>
+                    <div class="flex gap-2 bg-indigo-50 p-2 rounded-2xl">
+                        <input type="text" id="new-group-input" placeholder="เพิ่มชื่อทีม..." class="flex-1 bg-transparent px-4 outline-none font-bold">
+                        <button onclick="addGroup()" class="bg-indigo-600 text-white px-5 py-2 rounded-2xl font-bold">+</button>
                     </div>
                 </div>
             </div>
-
-            <!-- 4. Random Stage -->
-            <div id="stage-random" class="stage-content flex-col p-4 md:p-8 items-center justify-center overflow-y-auto">
-                <div class="w-full max-w-md bg-white rounded-[40px] p-8 shadow-sm border border-indigo-50 text-center relative my-auto">
-                    <h3 class="text-2xl font-black text-indigo-900 mb-6">สุ่มเรียกเลขที่</h3>
-                    <div class="bg-gray-100 px-4 py-2 rounded-2xl flex items-center justify-between gap-3 border mb-8">
-                        <span class="text-[10px] font-black text-gray-500 uppercase">สุ่มแบบห้ามซ้ำ</span>
-                        <label class="switch"><input type="checkbox" id="no-repeat" onchange="resetDrawn()"><span class="slider"></span></label>
-                    </div>
-                    <div class="relative mb-10">
-                        <div id="rand-display" class="text-8xl md:text-9xl font-black text-indigo-600 py-10 bg-indigo-50 rounded-[40px] border">--</div>
-                        <div id="drawn-indicator" class="absolute -top-3 -right-3 bg-orange-500 text-white px-4 py-1.5 rounded-full text-xs font-black shadow-lg hidden">0/0</div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-8">
-                        <input type="number" id="min-val" value="1" class="w-full text-center p-3 rounded-2xl font-black text-xl border">
-                        <input type="number" id="max-val" value="40" class="w-full text-center p-3 rounded-2xl font-black text-xl border">
-                    </div>
-                    <div class="flex gap-4">
-                        <button onclick="spin()" class="flex-1 bg-indigo-600 text-white py-5 rounded-3xl font-black text-xl hover:bg-indigo-700">สุ่มเลข!</button>
-                        <button onclick="resetDrawn()" class="p-5 bg-gray-100 rounded-3xl text-gray-400 border"><i data-lucide="rotate-ccw"></i></button>
-                    </div>
-                </div>
-            </div>
-
+            <div id="stage-random" class="stage-content">...</div>
         </main>
 
-        <!-- Navigation Bar -->
-        <nav class="p-3 md:p-4 bg-white border-t flex justify-around items-center shadow-2xl z-20 shrink-0">
+        <nav class="p-4 bg-white border-t flex justify-around items-center shrink-0">
             <button onclick="switchTab('play')" id="tab-play" class="tool-btn active"><i data-lucide="gamepad-2"></i><span class="text-[9px] font-black mt-1">PLAY</span></button>
-            <button onclick="switchTab('board')" id="tab-board" class="tool-btn"><i data-lucide="edit-3"></i><span class="text-[9px] font-black mt-1">BOARD</span></button>
-            <button onclick="switchTab('scores')" id="tab-scores" class="tool-btn"><i data-lucide="trophy"></i><span class="text-[9px] font-black mt-1">SCORES</span></button>
-            <button onclick="switchTab('random')" id="tab-random" class="tool-btn"><i data-lucide="hash"></i><span class="text-[9px] font-black mt-1">RANDOM</span></button>
+            <button onclick="switchTab('scores')" id="tab-scores" class="tool-btn"><i data-lucide="trophy"></i><span class="text-[9px] font-black mt-1">TEAMS</span></button>
         </nav>
-
     </div>
 
     <script>
-        // Data Library
         const idiomsData = [
-            { name: "กงเกวียนกำเกวียน", hint: "เวรกรรมตามทันเหมือนล้อเกวียนที่หมุนตามรอยกันไป", emoji: "🎡" },
-            { name: "กบเลือกนาย", hint: "ไม่พอใจในสิ่งที่ตนมีอยู่จนเรียกร้องมากเกินควร", emoji: "🐸" },
-            { name: "กบในกะลาครอบ", hint: "คนที่มีความรู้น้อยแต่ชอบอวดตัวว่ามีความรู้มาก", emoji: "🐚" },
-            { name: "กระต่ายตื่นตูม", hint: "ตื่นตกใจในเรื่องที่ยังไม่รู้ข้อเท็จจริงจนวุ่นวาย", emoji: "🐰" },
-            { name: "ขว้างงูไม่พ้นคอ", hint: "ทำอะไรที่ผลร้ายย้อนกลับมาสู่ตนเอง", emoji: "🐍" },
-            { name: "ขิงก็รา ข่าก็แรง", hint: "คนสองคนที่อารมณ์ร้อนพอๆ กัน ไม่ยอมกัน", emoji: "🌶️" },
-            { name: "ขี่ช้างจับตั๊กแตน", hint: "ลงทุนลงแรงมากเกินไปเพื่อให้ได้ผลตอบแทนเพียงเล็กน้อย", emoji: "🐘" },
-            { name: "ดินพอกหางหมู", hint: "งานที่คั่งค้างสะสมไว้เรื่อยๆ จนลำบากตอนท้าย", emoji: "🐷" },
-            { name: "น้ำขึ้นให้รีบตัก", hint: "เมื่อมีโอกาสดีเข้ามา ควรรีบคว้าไว้และใช้ประโยชน์", emoji: "🌊" },
-            { name: "ปลาหมอตายเพราะปาก", hint: "พูดจาไม่ระวังจนนำภัยมาสู่ตนเอง", emoji: "👄" },
-            { name: "วัวหายล้อมคอก", hint: "คิดป้องกันเมื่อเกิดความเสียหายขึ้นแล้ว ซึ่งมักจะไม่ทันการ", emoji: "🐄" },
-            { name: "สี่ตีนยังรู้พลาด นักปราชญ์ยังรู้พลั้ง", hint: "ทุกคนย่อมทำความผิดพลาดกันได้ แม้จะเป็นผู้มีความรู้", emoji: "🐎" },
-            { name: "หัวล้านได้หวี", hint: "ได้ของมีค่าแต่ไม่สามารถใช้ประโยชน์กับตนเองได้", emoji: "👨‍🦲" },
-            { name: "ไก่เห็นตีนงู งูเห็นนมไก่", hint: "ต่างฝ่ายต่างรู้ความลับหรือเล่ห์เหลี่ยมของกันและกัน", emoji: "🐔" },
-            { name: "ปากว่าตาขยิบ", hint: "พูดอย่างหนึ่งแต่ทำอีกอย่างหนึ่ง ไม่ตรงกับที่พูด", emoji: "😉" }
+            { name: "กงเกวียนกำเกวียน", emoji: "🎡" },
+            { name: "กบเลือกนาย", emoji: "🐸" },
+            { name: "กบในกะลาครอบ", emoji: "🐚" },
+            { name: "กระต่ายตื่นตูม", emoji: "🐰" },
+            { name: "ขว้างงูไม่พ้นคอ", emoji: "🐍" },
+            { name: "ขิงก็รา ข่าก็แรง", emoji: "🌶️" },
+            { name: "ขี่ช้างจับตั๊กแตน", emoji: "🐘" },
+            { name: "ดินพอกหางหมู", emoji: "🐷" },
+            { name: "น้ำขึ้นให้รีบตัก", emoji: "🌊" },
+            { name: "ปลาหมอตายเพราะปาก", emoji: "👄" },
+            { name: "วัวหายล้อมคอก", emoji: "🐄" },
+            { name: "ไก่เห็นตีนงู งูเห็นนมไก่", emoji: "🐔" }
         ];
 
-        let currentIdx = 0, gameScore = 0, timeLeft = 60, timerId = null, quizPool = [];
-        let drawnNums = [], eraserMode = false, painting = false;
-        let gameMode = 'single', activeGroupIdx = null;
         let groups = [
             {name: "ทีมมังกร", score: 0, color: "bg-rose-500"}, 
             {name: "ทีมหงส์", score: 0, color: "bg-sky-500"},
             {name: "ทีมสิงโต", score: 0, color: "bg-emerald-500"}
         ];
 
-        // UI Helpers
+        let currentIdx = 0, gameScore = 0, timeLeft = 60, timerId = null, quizPool = [];
+        let gameMode = 'single', activeGroupIdx = null;
+
         function switchTab(tabId) {
             document.querySelectorAll('.stage-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tool-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`stage-${tabId}`).classList.add('active');
             document.getElementById(`tab-${tabId}`).classList.add('active');
-            if(tabId === 'board') setTimeout(initCanvas, 10);
             lucide.createIcons();
         }
 
-        function renderHeader() {
-            const h = document.getElementById('header-group-scores');
-            h.innerHTML = '';
-            const sorted = [...groups].sort((a,b) => b.score - a.score);
-            sorted.forEach((g) => {
-                const b = document.createElement('div');
-                b.className = `group-score-badge flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-[11px] font-black shadow-sm shrink-0 border border-white/20 ${g.color}`;
-                b.innerHTML = `<span>${g.name}</span><span class="bg-black/20 px-1.5 rounded-lg ml-1">${g.score}</span>`;
-                h.appendChild(b);
-            });
-        }
-
-        // Game Logic
         function initMode(mode) {
             gameMode = mode;
+            currentIdx = 0;
+            quizPool = [...idiomsData].sort(() => Math.random() - 0.5).slice(0, 10);
             document.getElementById('start-area').classList.add('hidden');
-            if(mode === 'team') showTeamTurnSelector();
-            else startActualQuiz();
+            if(mode === 'team') showTeamTurnSelector(); else startActualQuiz();
         }
 
         function showTeamTurnSelector() {
             document.getElementById('quiz-area').classList.add('hidden');
-            document.getElementById('result-area').classList.add('hidden');
             document.getElementById('team-turn-area').classList.remove('hidden');
             const grid = document.getElementById('team-selector-grid');
             grid.innerHTML = '';
             groups.forEach((g, i) => {
                 const b = document.createElement('button');
-                b.className = `${g.color} text-white p-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all text-xs h-24 flex flex-col items-center justify-center border-2 border-white/20 hover:brightness-110`;
-                b.innerHTML = `<span class="truncate w-full px-1">${g.name}</span><span class="text-[10px] opacity-70 mt-1">${g.score} Pts</span>`;
+                b.className = `${g.color} text-white p-6 rounded-2xl font-black shadow-lg hover:scale-105 transition-all`;
+                b.innerHTML = `<div>${g.name}</div><div class="text-xs opacity-70">${g.score} Pts</div>`;
                 b.onclick = () => { activeGroupIdx = i; startActualQuiz(); };
                 grid.appendChild(b);
             });
         }
 
-        function forceEndGame() {
-            if(confirm('ต้องการหยุดเกมและเข้าสู่หน้าสรุปอันดับทันทีหรือไม่?')) {
-                clearInterval(timerId);
-                endQuiz(); // Navigate to Awards
-            }
-        }
-
         function startActualQuiz() {
-            if (currentIdx === 0) {
-                quizPool = [...idiomsData].sort(() => Math.random() - 0.5).slice(0, 10);
-                gameScore = 0;
-            }
             document.getElementById('team-turn-area').classList.add('hidden');
             document.getElementById('quiz-area').classList.remove('hidden');
-            updateTopDisplay();
             loadQuiz();
         }
 
-        function updateTopDisplay() {
-            const modeEl = document.getElementById('mode-label');
-            const scoreEl = document.getElementById('global-game-score');
-            const indicator = document.getElementById('turn-indicator');
-            if (gameMode === 'team') {
-                indicator.classList.remove('hidden');
-                indicator.innerText = `คิวตอบ: ${groups[activeGroupIdx].name}`;
-                indicator.className = `mt-2 px-3 py-1 ${groups[activeGroupIdx].color} text-white text-[10px] font-black rounded-lg uppercase inline-block`;
-                modeEl.innerText = "คะแนนกลุ่ม";
-                scoreEl.innerText = groups[activeGroupIdx].score;
-            } else {
-                indicator.classList.add('hidden');
-                modeEl.innerText = "คะแนนสะสม";
-                scoreEl.innerText = gameScore;
-            }
-        }
-
         function loadQuiz() {
-            if(currentIdx >= quizPool.length) { endQuiz(); return; }
+            if(currentIdx >= 10) { endQuiz(); return; }
             const q = quizPool[currentIdx];
-            document.getElementById('q-num-text').innerText = `ข้อที่ ${currentIdx+1}/${quizPool.length}`;
-            document.getElementById('q-hint').innerText = q.hint;
+            document.getElementById('q-num-text').innerText = `ข้อที่ ${currentIdx+1}/10`;
             document.getElementById('q-emoji').innerText = q.emoji;
-
-            // Generate Options
-            let opts = [q.name];
-            let pool = idiomsData.filter(i => i.name !== q.name);
-            let similar = pool.filter(i => i.name.charAt(0) === q.name.charAt(0)).sort(() => Math.random() - 0.5);
-            let others = pool.filter(i => i.name.charAt(0) !== q.name.charAt(0)).sort(() => Math.random() - 0.5);
             
-            opts.push(...similar.slice(0, 2).map(i => i.name));
-            while(opts.length < 4 && others.length > 0) {
-                let candidate = others.pop().name;
-                if(!opts.includes(candidate)) opts.push(candidate);
+            if(gameMode === 'team') {
+                document.getElementById('turn-indicator').innerText = `ถึงตาของ: ${groups[activeGroupIdx].name}`;
             }
+
+            let opts = [q.name];
+            let others = idiomsData.filter(i => i.name !== q.name).sort(() => Math.random() - 0.5);
+            opts.push(...others.slice(0, 3).map(i => i.name));
             opts.sort(() => Math.random() - 0.5);
 
             const grid = document.getElementById('options-grid');
@@ -419,210 +249,129 @@
 
         function startT() {
             clearInterval(timerId); timeLeft = 60;
-            const elTxt = document.getElementById('timer-text');
-            const elBar = document.getElementById('timer-bar');
             timerId = setInterval(() => {
                 timeLeft -= 0.1;
-                elTxt.innerText = Math.ceil(timeLeft);
-                elBar.style.width = (timeLeft / 60 * 100) + "%";
+                document.getElementById('timer-text').innerText = Math.ceil(timeLeft);
+                document.getElementById('timer-bar').style.width = (timeLeft/60*100) + "%";
                 if(timeLeft <= 0) checkAns(null, quizPool[currentIdx].name);
             }, 100);
         }
 
         function checkAns(sel, cor) {
             clearInterval(timerId);
-            const btns = document.querySelectorAll('#options-grid button');
-            btns.forEach(b => {
-                b.disabled = true;
-                if(b.innerText === cor) b.className = "choice-btn bg-green-500 text-white border-green-600 shadow-lg scale-105 z-10";
-                else if(b.innerText === sel) b.className = "choice-btn bg-red-500 text-white border-red-600 opacity-60";
-            });
-
             if(sel === cor) {
-                const pts = Math.ceil(timeLeft); 
-                if(gameMode === 'team') { groups[activeGroupIdx].score += pts; renderScores(); updateTopDisplay(); }
-                else { gameScore += pts; updateTopDisplay(); }
+                let pts = Math.ceil(timeLeft);
+                if(gameMode === 'team') groups[activeGroupIdx].score += pts;
+                else gameScore += pts;
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
             }
-
+            
+            currentIdx++;
             setTimeout(() => {
-                currentIdx++;
-                if(currentIdx < 10 && gameMode === 'team') showTeamTurnSelector();
+                if(gameMode === 'team' && currentIdx < 10) showTeamTurnSelector();
                 else loadQuiz();
-            }, 1500);
+                renderHeader();
+            }, 1000);
         }
 
         function endQuiz() {
-            // UI Hide
             document.getElementById('quiz-area').classList.add('hidden');
-            document.getElementById('team-turn-area').classList.add('hidden');
-            document.getElementById('start-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
             
-            // UI Show Result
-            const resArea = document.getElementById('result-area');
-            resArea.classList.remove('hidden');
-            resArea.classList.add('active'); // Custom active class handling for flex
+            const container = document.getElementById('podium-container');
+            container.innerHTML = '';
+
+            // Sort groups by score
+            let sorted = [...groups].sort((a, b) => b.score - a.score);
             
-            const podiumCont = document.getElementById('podium-container');
-            const sideList = document.getElementById('result-side-list');
-            podiumCont.innerHTML = '';
-            sideList.innerHTML = '';
+            // Assign ranks (Handle ties)
+            let currentRank = 1;
+            sorted.forEach((team, i) => {
+                if (i > 0 && team.score < sorted[i-1].score) currentRank = i + 1;
+                team.rank = currentRank;
+            });
 
-            const sorted = [...groups].sort((a,b)=>b.score-a.score);
+            // Re-order for visual display: 2nd, 1st, 3rd
+            let visualOrder = [];
+            const firsts = sorted.filter(t => t.rank === 1);
+            const seconds = sorted.filter(t => t.rank === 2);
+            const thirds = sorted.filter(t => t.rank === 3);
 
-            if(gameMode === 'team') {
-                // Podium: Rank 1, 2, 3
-                const podiumOrder = [1, 0, 2]; // visual position for rank: 2, 1, 3
-                podiumOrder.forEach(rankIdx => {
-                    const g = sorted[rankIdx];
-                    if(g) {
-                        const item = document.createElement('div');
-                        item.className = "podium-item";
-                        const medal = rankIdx === 0 ? '👑' : (rankIdx === 1 ? '🥈' : '🥉');
-                        const baseClass = rankIdx === 0 ? 'podium-1' : (rankIdx === 1 ? 'podium-2' : 'podium-3');
-                        item.innerHTML = `
-                            <div class="mb-2 text-center w-full relative">
-                                ${rankIdx === 0 ? `<div class="crown-icon">👑</div>` : `<span class="text-3xl">${medal}</span>`}
-                                <p class="text-[11px] font-black text-indigo-900 truncate px-1 mt-2">${g.name}</p>
-                            </div>
-                            <div class="podium-base ${baseClass}">
-                                <span class="text-2xl">${rankIdx + 1}</span>
-                                <span class="text-[10px] opacity-80">${g.score} Pts</span>
-                            </div>
-                        `;
-                        podiumCont.appendChild(item);
-                    }
-                });
+            // Logic to build a balanced podium
+            visualOrder = [...seconds, ...firsts, ...thirds];
 
-                // Side List (Rank 4+)
-                if(sorted.length > 3) {
-                    sorted.slice(3).forEach((g, idx) => {
-                        const row = document.createElement('div');
-                        row.className = "flex justify-between items-center px-4 py-2.5 bg-gray-50 rounded-2xl border border-gray-100";
-                        row.innerHTML = `
-                            <div class="flex items-center gap-3">
-                                <span class="text-[10px] font-black text-gray-400">#${idx+4}</span>
-                                <span class="text-sm font-bold text-gray-600 truncate max-w-[100px]">${g.name}</span>
-                            </div>
-                            <span class="font-black text-indigo-600 text-sm">${g.score}</span>
-                        `;
-                        sideList.appendChild(row);
-                    });
-                } else {
-                    sideList.innerHTML = `<div class="text-center py-10 opacity-30 flex flex-col items-center">
-                        <i data-lucide="award" class="w-8 h-8 mb-2"></i>
-                        <p class="text-xs font-bold">ไม่มีอันดับอื่น</p>
-                    </div>`;
-                }
-            } else {
-                podiumCont.innerHTML = `<div class="text-center w-full my-auto"><div class="text-[120px] animate-pulse">🌟</div></div>`;
-                sideList.innerHTML = `<div class="text-center py-4">
-                    <p class="text-gray-400 font-bold text-[10px] uppercase mb-1">Your Final Score</p>
-                    <p class="text-6xl font-black text-indigo-600">${gameScore}</p>
-                </div>`;
-            }
-            lucide.createIcons();
+            visualOrder.forEach(team => {
+                const item = document.createElement('div');
+                item.className = "podium-item";
+                
+                // Set height based on rank
+                let h = "60px";
+                if(team.rank === 1) h = "180px";
+                else if(team.rank === 2) h = "130px";
+                else if(team.rank === 3) h = "90px";
+
+                item.innerHTML = `
+                    <div class="mb-2 text-center relative w-full">
+                        ${team.rank === 1 ? '<div class="crown-icon">👑</div>' : ''}
+                        <div class="font-black text-xs truncate px-1">${team.name}</div>
+                        <div class="text-indigo-600 font-bold text-sm">${team.score}</div>
+                    </div>
+                    <div class="podium-base rank-${team.rank}" style="height: ${h}">
+                        <span class="text-3xl">${team.rank}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+
+            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
         }
 
-        function resetGame() {
-            currentIdx = 0; gameScore = 0;
-            document.getElementById('result-area').classList.add('hidden');
-            document.getElementById('result-area').classList.remove('active');
-            document.getElementById('start-area').classList.remove('hidden');
-            document.getElementById('global-game-score').innerText = "0";
-            document.getElementById('game-progress-bar').style.width = "0%";
-            renderHeader();
+        function renderHeader() {
+            const h = document.getElementById('header-group-scores');
+            h.innerHTML = '';
+            [...groups].sort((a,b) => b.score - a.score).forEach(g => {
+                const b = document.createElement('div');
+                b.className = `${g.color} px-3 py-1 rounded-full text-white text-[10px] font-bold flex items-center gap-2 shadow-sm`;
+                b.innerHTML = `<span>${g.name}</span><span class="bg-black/20 px-2 rounded-full">${g.score}</span>`;
+                h.appendChild(b);
+            });
+            document.getElementById('global-game-score').innerText = gameScore;
         }
 
-        // Whiteboard Engine
-        const canvas = document.getElementById('drawing-canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        function initCanvas() {
-            const box = canvas.parentElement;
-            if(canvas.width !== box.clientWidth) {
-                const data = ctx.getImageData(0,0,Math.max(1,canvas.width), Math.max(1,canvas.height));
-                canvas.width = box.clientWidth; canvas.height = box.clientHeight;
-                ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                ctx.putImageData(data, 0, 0);
-            }
-        }
-        function draw(e) {
-            if(!painting) return;
-            const r = canvas.getBoundingClientRect();
-            const x = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left;
-            const y = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top;
-            ctx.lineWidth = document.getElementById('pen-size').value;
-            ctx.strokeStyle = eraserMode ? '#F9FAFB' : document.getElementById('pen-color').value;
-            ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
-        }
-        canvas.addEventListener('mousedown', (e)=>{ painting=true; draw(e); });
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', ()=>{ painting=false; ctx.beginPath(); });
-        canvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); painting=true; draw(e); });
-        canvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); draw(e); });
-        canvas.addEventListener('touchend', ()=>{ painting=false; ctx.beginPath(); });
-        function clearCanvas() { ctx.clearRect(0,0,canvas.width,canvas.height); }
-        function setEraser() {
-            eraserMode = !eraserMode;
-            document.getElementById('eraser-btn').classList.toggle('bg-indigo-600', eraserMode);
-            document.getElementById('eraser-btn').classList.toggle('text-white', eraserMode);
-        }
-
-        // Teams Engine
         function addGroup() {
-            const inp = document.getElementById('new-group-input');
-            if(!inp.value.trim()) return;
-            const clrs = ['bg-rose-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-cyan-500'];
-            groups.push({name: inp.value.trim(), score: 0, color: clrs[groups.length % clrs.length]});
-            inp.value = ''; renderScores();
+            const val = document.getElementById('new-group-input').value;
+            if(!val) return;
+            groups.push({name: val, score: 0, color: "bg-indigo-500"});
+            document.getElementById('new-group-input').value = '';
+            renderScores();
         }
+
         function renderScores() {
             const list = document.getElementById('groups-list');
             list.innerHTML = '';
             groups.forEach((g, i) => {
                 const row = document.createElement('div');
-                row.className = "flex items-center justify-between p-3 bg-gray-50 rounded-[24px] border border-gray-100 shadow-sm";
-                row.innerHTML = `<div class="flex items-center gap-2 overflow-hidden"><div class="w-3 h-3 rounded-full shrink-0 ${g.color}"></div><span class="font-bold text-gray-700 text-xs truncate">${g.name}</span></div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button onclick="upScore(${i},-10)" class="w-9 h-9 flex items-center justify-center bg-white rounded-xl text-red-500 font-black shadow-sm border">-</button>
-                        <span class="text-xl font-black text-indigo-900 w-10 text-center">${g.score}</span>
-                        <button onclick="upScore(${i},10)" class="w-9 h-9 flex items-center justify-center bg-white rounded-xl text-green-500 font-black shadow-sm border">+</button>
-                        <button onclick="delG(${i})" class="ml-1 text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                row.className = "flex justify-between items-center p-3 bg-gray-50 rounded-xl border";
+                row.innerHTML = `<span class="font-bold">${g.name}</span>
+                    <div class="flex gap-2 items-center">
+                        <button onclick="groups[${i}].score-=10;renderScores();renderHeader()" class="w-8 h-8 bg-white border rounded">-</button>
+                        <span class="w-8 text-center font-black">${g.score}</span>
+                        <button onclick="groups[${i}].score+=10;renderScores();renderHeader()" class="w-8 h-8 bg-white border rounded">+</button>
                     </div>`;
                 list.appendChild(row);
             });
-            lucide.createIcons(); renderHeader();
-        }
-        function upScore(i, v) { groups[i].score = Math.max(0, groups[i].score + v); renderScores(); }
-        function delG(i) { if(groups.length > 1) { groups.splice(i, 1); renderScores(); } }
-
-        // Randomizer Engine
-        function resetDrawn() { drawnNums = []; document.getElementById('rand-display').innerText = '--'; upDrawInd(); }
-        function upDrawInd() {
-            const min = parseInt(document.getElementById('min-val').value), max = parseInt(document.getElementById('max-val').value);
-            const range = max - min + 1, ind = document.getElementById('drawn-indicator'), noR = document.getElementById('no-repeat').checked;
-            if(noR && range > 0) { ind.classList.remove('hidden'); ind.innerText = `${drawnNums.length}/${range}`; }
-            else ind.classList.add('hidden');
-        }
-        function spin() {
-            const min = parseInt(document.getElementById('min-val').value), max = parseInt(document.getElementById('max-val').value);
-            const res = document.getElementById('rand-display'), noR = document.getElementById('no-repeat').checked, range = max - min + 1;
-            if(isNaN(min) || isNaN(max) || min >= max) { res.innerText = "Error"; return; }
-            if(noR && drawnNums.length >= range) { res.innerText = "ครบ"; return; }
-            let c = 0;
-            const t = setInterval(() => {
-                res.innerText = Math.floor(Math.random() * (max - min + 1)) + min;
-                if(++c > 12) {
-                    clearInterval(t);
-                    let val;
-                    if(noR) { do { val = Math.floor(Math.random() * (max - min + 1)) + min; } while(drawnNums.includes(val)); drawnNums.push(val); } 
-                    else val = Math.floor(Math.random() * (max - min + 1)) + min;
-                    res.innerText = val; upDrawInd();
-                }
-            }, 60);
         }
 
-        window.addEventListener('resize', initCanvas);
-        window.onload = () => { lucide.createIcons(); renderScores(); initCanvas(); };
+        function resetGame() {
+            groups.forEach(g => g.score = 0);
+            gameScore = 0;
+            currentIdx = 0;
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('start-area').classList.remove('hidden');
+            renderHeader();
+        }
+
+        window.onload = () => { lucide.createIcons(); renderHeader(); renderScores(); };
     </script>
 </body>
 </html>
