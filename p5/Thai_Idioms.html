@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เกมทายสำนวนไทย Ultimate v5.2</title>
+    <title>เกมประลองปัญญา สำนวนไทย v5.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -11,7 +11,7 @@
     <style>
         body {
             font-family: 'Sarabun', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden; margin: 0;
@@ -20,152 +20,155 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
         }
         .stage-content {
             display: none; width: 100%; height: 100%;
             animation: fadeIn 0.4s ease-out;
         }
         .stage-content.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Colorful Choice Buttons */
+        /* Choice Buttons Colors */
         .choice-btn {
-            @apply p-5 border-b-4 rounded-2xl font-black transition-all active:scale-95 active:border-b-0 shadow-md text-lg text-center relative overflow-hidden bg-white;
+            @apply p-5 border-b-4 rounded-2xl font-black transition-all active:scale-95 active:border-b-0 shadow-md text-lg text-center bg-white;
         }
-        .choice-0 { @apply border-rose-500 text-rose-600 hover:bg-rose-50; }
-        .choice-1 { @apply border-sky-500 text-sky-600 hover:bg-sky-50; }
-        .choice-2 { @apply border-emerald-500 text-emerald-600 hover:bg-emerald-50; }
-        .choice-3 { @apply border-amber-500 text-amber-600 hover:bg-amber-50; }
+        .choice-0 { @apply border-purple-500 text-purple-700 hover:bg-purple-50; }
+        .choice-1 { @apply border-blue-500 text-blue-700 hover:bg-blue-50; }
+        .choice-2 { @apply border-pink-500 text-pink-700 hover:bg-pink-50; }
+        .choice-3 { @apply border-orange-500 text-orange-700 hover:bg-orange-50; }
 
+        /* Podium Dynamic */
         .podium-base {
             @apply w-full rounded-t-3xl flex flex-col items-center justify-center text-white font-black shadow-2xl relative;
             transition: height 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .rank-1 { @apply bg-gradient-to-t from-yellow-600 via-yellow-400 to-yellow-200 text-yellow-900; }
-        .rank-2 { @apply bg-gradient-to-t from-slate-500 via-slate-300 to-slate-100 text-slate-800; }
-        .rank-3 { @apply bg-gradient-to-t from-orange-700 via-orange-500 to-orange-300 text-orange-100; }
+        .rank-1 { @apply bg-gradient-to-t from-yellow-600 to-yellow-300 text-yellow-900 border-t-4 border-yellow-200; }
+        .rank-2 { @apply bg-gradient-to-t from-slate-500 to-slate-200 text-slate-800 border-t-4 border-slate-100; }
+        .rank-3 { @apply bg-gradient-to-t from-orange-700 to-orange-400 text-orange-100 border-t-4 border-orange-200; }
 
         .crown-animate {
             animation: crownFloat 2s infinite ease-in-out;
         }
-        @keyframes crownFloat { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-15px) rotate(5deg); } }
+        @keyframes crownFloat { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
     </style>
 </head>
 <body class="p-2 md:p-6">
 
-    <div class="glass w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden relative border border-white/40">
+    <div class="glass w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden relative border border-white/50">
         
-        <header class="p-5 border-b flex justify-between items-center bg-white/50 backdrop-blur-sm z-10">
+        <header class="p-5 border-b flex justify-between items-center bg-white/60 backdrop-blur-md z-10">
             <div class="flex items-center gap-4">
-                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-2xl text-white shadow-lg">
-                    <i data-lucide="trophy"></i>
+                <div class="bg-indigo-600 p-3 rounded-2xl text-white shadow-lg">
+                    <i data-lucide="book-open"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-black text-indigo-900 leading-none">ทายสำนวนไทย</h1>
-                    <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1">Digital Classroom v5.2</p>
+                    <h1 class="text-xl font-black text-indigo-900 leading-none">เก่งภาษากับสำนวนไทย</h1>
+                    <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1">Quiz Master Edition</p>
                 </div>
             </div>
             <div id="header-scores" class="flex gap-2 overflow-hidden items-center"></div>
         </header>
 
-        <main class="flex-1 relative bg-gradient-to-b from-transparent to-indigo-50/30">
+        <main class="flex-1 relative bg-white/20">
             
             <div id="stage-start" class="stage-content active flex-col items-center justify-center p-8 text-center">
-                <div class="text-[120px] mb-6 drop-shadow-2xl">🇹🇭</div>
-                <h2 class="text-4xl font-black text-gray-800 mb-4">พร้อมประลองปัญญาหรือยัง?</h2>
-                <p class="text-gray-500 mb-10 font-bold text-lg">เลือกโหมดเพื่อเริ่มการแข่งขัน</p>
+                <div class="bg-white p-8 rounded-[40px] shadow-xl mb-8 border-4 border-indigo-100">
+                    <h2 class="text-4xl font-black text-indigo-900 mb-2">ทายสำนวนจากความหมาย</h2>
+                    <p class="text-gray-500 font-bold italic text-lg">คุณรู้จักสำนวนไทยดีแค่ไหน?</p>
+                </div>
                 <div class="flex flex-col sm:flex-row gap-6">
-                    <button onclick="initGame('single')" class="group bg-white text-indigo-600 border-2 border-indigo-100 px-12 py-6 rounded-3xl font-black text-xl shadow-xl hover:border-indigo-500 transition-all flex items-center gap-3">
-                        <i data-lucide="user"></i> เล่นคนเดียว
+                    <button onclick="initGame('single')" class="bg-white text-indigo-600 border-2 border-indigo-100 px-12 py-6 rounded-3xl font-black text-xl shadow-xl hover:border-indigo-500 transition-all flex items-center gap-3">
+                        <i data-lucide="user"></i> คนเดียว
                     </button>
-                    <button onclick="initGame('team')" class="group bg-indigo-600 text-white px-12 py-6 rounded-3xl font-black text-xl shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3">
-                        <i data-lucide="users"></i> เล่นเป็นทีม
+                    <button onclick="initGame('team')" class="bg-indigo-600 text-white px-12 py-6 rounded-3xl font-black text-xl shadow-xl hover:bg-indigo-700 transition-all flex items-center gap-3">
+                        <i data-lucide="users"></i> เล่นเป็นกลุ่ม
                     </button>
                 </div>
             </div>
 
             <div id="stage-team-select" class="stage-content flex-col items-center justify-center p-8">
-                <h2 class="text-3xl font-black text-indigo-900 mb-8">ข้อต่อไป... ทีมใดจะตอบ?</h2>
+                <h2 class="text-3xl font-black text-indigo-900 mb-8">ทีมใดจะเป็นผู้ตอบ?</h2>
                 <div id="team-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-2xl"></div>
             </div>
 
             <div id="stage-quiz" class="stage-content flex-col items-center p-6">
                 <div class="w-full max-w-2xl flex justify-between items-end mb-4">
-                    <div class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-2xl font-black text-sm" id="q-counter">ข้อที่ 1/10</div>
-                    <div class="flex flex-col items-end">
-                        <div class="flex items-center gap-2 text-rose-500 font-black text-3xl">
-                            <i data-lucide="timer" class="w-8 h-8"></i>
-                            <span id="timer-val">60</span>
-                        </div>
+                    <div class="bg-indigo-600 text-white px-4 py-2 rounded-2xl font-black text-sm" id="q-counter">ข้อที่ 1/10</div>
+                    <div class="flex items-center gap-2 text-rose-500 font-black text-3xl">
+                        <i data-lucide="clock" class="w-8 h-8"></i>
+                        <span id="timer-val">60</span>
                     </div>
                 </div>
 
-                <div class="w-full max-w-2xl bg-gray-200 h-3 rounded-full mb-8 overflow-hidden border shadow-inner">
-                    <div id="timer-bar" class="h-full bg-gradient-to-r from-rose-400 to-rose-600 transition-all duration-100" style="width: 100%"></div>
+                <div class="w-full max-w-2xl bg-gray-200 h-3 rounded-full mb-8 overflow-hidden shadow-inner">
+                    <div id="timer-bar" class="h-full bg-rose-500 transition-all duration-100" style="width: 100%"></div>
                 </div>
 
-                <div class="w-full max-w-2xl bg-white rounded-[40px] p-10 shadow-xl border-t-8 border-indigo-500 text-center relative mb-8">
-                    <div id="q-emoji" class="text-8xl md:text-9xl mb-6">🐘</div>
-                    <h3 id="q-text" class="text-2xl md:text-3xl font-black text-gray-800">จากภาพคือสำนวนอะไร?</h3>
-                    <div id="current-player" class="mt-4 inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest"></div>
+                <div class="w-full max-w-3xl bg-white rounded-[40px] p-12 shadow-2xl border-t-8 border-indigo-600 text-center relative mb-8 min-h-[220px] flex flex-col justify-center">
+                    <p class="text-indigo-400 font-bold uppercase tracking-[0.2em] text-xs mb-4">ความหมายของสำนวนนี้คือ...</p>
+                    <h3 id="q-text" class="text-2xl md:text-4xl font-black text-gray-800 leading-relaxed">คำถามจะปรากฏที่นี่</h3>
+                    <div id="current-player" class="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full text-sm font-bold shadow-lg"></div>
                 </div>
 
-                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl"></div>
+                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl"></div>
             </div>
 
-            <div id="stage-result" class="stage-content flex-col items-center justify-center p-6">
-                <h2 class="text-5xl font-black text-indigo-900 mb-16 italic tracking-tighter drop-shadow-sm">🏆 CHAMPIONS 🏆</h2>
-                <div id="podium-wrap" class="flex items-end justify-center gap-4 w-full max-w-3xl h-72 mb-16"></div>
-                <button onclick="location.reload()" class="bg-white border-2 border-indigo-600 text-indigo-600 px-12 py-4 rounded-2xl font-black text-xl hover:bg-indigo-600 hover:text-white transition-all shadow-lg flex items-center gap-3">
-                    <i data-lucide="rotate-ccw"></i> กลับหน้าแรก
+            <div id="stage-result" class="stage-content flex-col items-center justify-center p-6 overflow-y-auto">
+                <h2 class="text-5xl font-black text-indigo-900 mb-16 italic tracking-tight drop-shadow-sm">🏆 สุดยอดทีมภาษาไทย 🏆</h2>
+                <div id="podium-wrap" class="flex items-end justify-center gap-4 w-full max-w-3xl h-72 mb-16 px-4"></div>
+                <button onclick="location.reload()" class="bg-indigo-600 text-white px-12 py-5 rounded-3xl font-black text-xl hover:bg-indigo-700 transition-all shadow-xl flex items-center gap-3">
+                    <i data-lucide="home"></i> กลับหน้าหลัก
                 </button>
             </div>
 
         </main>
         
-        <nav id="bottom-nav" class="p-4 bg-white border-t flex justify-around">
+        <nav id="bottom-nav" class="p-4 bg-white/80 border-t flex justify-around">
             <button onclick="switchTab('start')" class="flex flex-col items-center text-indigo-600 font-bold text-[10px]"><i data-lucide="play-circle"></i>PLAY</button>
-            <button onclick="openManageTeams()" class="flex flex-col items-center text-gray-400 font-bold text-[10px]"><i data-lucide="settings"></i>TEAMS</button>
+            <button onclick="openManageTeams()" class="flex flex-col items-center text-gray-400 font-bold text-[10px]"><i data-lucide="users"></i>TEAM MGMT</button>
         </nav>
     </div>
 
     <div id="team-modal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl">
-            <h3 class="text-2xl font-black mb-4">จัดการทีม</h3>
+            <h3 class="text-2xl font-black mb-4">จัดการรายชื่อทีม</h3>
             <div id="modal-teams-list" class="space-y-2 mb-6 max-h-60 overflow-y-auto"></div>
             <div class="flex gap-2">
-                <input type="text" id="add-team-input" placeholder="ชื่อทีม..." class="flex-1 border-2 rounded-xl px-4 font-bold">
-                <button onclick="addNewTeam()" class="bg-indigo-600 text-white p-3 rounded-xl"><i data-lucide="plus"></i></button>
+                <input type="text" id="add-team-input" placeholder="ใส่ชื่อทีมที่ต้องการ..." class="flex-1 border-2 rounded-xl px-4 font-bold outline-none border-indigo-100 focus:border-indigo-500">
+                <button onclick="addNewTeam()" class="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-700 transition-all"><i data-lucide="plus"></i></button>
             </div>
-            <button onclick="closeModal()" class="w-full mt-6 py-3 bg-gray-100 rounded-xl font-bold">ปิด</button>
+            <button onclick="closeModal()" class="w-full mt-6 py-3 bg-gray-100 rounded-xl font-bold hover:bg-gray-200">บันทึกและปิด</button>
         </div>
     </div>
 
     <script>
-        const idioms = [
-            { name: "กบเลือกนาย", emoji: "🐸👑" },
-            { name: "กระต่ายตื่นตูม", emoji: "🐰🌋" },
-            { name: "ขิงก็รา ข่าก็แรง", emoji: "🌶️🔥" },
-            { name: "ขี่ช้างจับตั๊กแตน", emoji: "🐘🦗" },
-            { name: "ดินพอกหางหมู", emoji: "🐷💩" },
-            { name: "น้ำขึ้นให้รีบตัก", emoji: "🌊🪣" },
-            { name: "ปลาหมอตายเพราะปาก", emoji: "🐟👄" },
-            { name: "วัวหายล้อมคอก", emoji: "🐄🏚️" },
-            { name: "ไก่เห็นตีนงู งูเห็นนมไก่", emoji: "🐔🐍" },
-            { name: "นกสองหัว", emoji: "🐦👥" },
-            { name: "จับปลาสองมือ", emoji: "🖐️🐟🖐️" },
-            { name: "หัวล้านได้หวี", emoji: "👨‍🦲🪮" }
+        // ข้อมูลสำนวนและความหมาย (ลบ Emoji ออกตามความต้องการ)
+        const idiomsLibrary = [
+            { name: "กงเกวียนกำเกวียน", hint: "เวรธรรมตามสนอง ทำอย่างไรย่อมได้อย่างนั้น" },
+            { name: "กบเลือกนาย", hint: "คนที่มีความต้องการไม่สิ้นสุด เปลี่ยนไปเรื่อยๆ จนตัวเองลำบาก" },
+            { name: "กระต่ายตื่นตูม", hint: "คนที่ตื่นตกใจง่ายในเรื่องที่ยังไม่รู้ข้อเท็จจริง" },
+            { name: "ขว้างงูไม่พ้นคอ", hint: "ทำอะไรที่ผลร้ายกลับมาสู่ตัวเอง หรือสลัดความรับผิดชอบไม่หลุด" },
+            { name: "ขิงก็รา ข่าก็แรง", hint: "ต่างฝ่ายต่างไม่ยอมกัน มีอารมณ์ร้อนพอๆ กัน" },
+            { name: "ขี่ช้างจับตั๊กแตน", hint: "การลงทุนลงแรงมหาศาล เพื่อให้ได้ผลตอบแทนเพียงเล็กน้อย" },
+            { name: "ดินพอกหางหมู", hint: "งานหรือสิ่งที่คั่งค้างสะสมไว้เรื่อยๆ จนทำลำบากในภายหลัง" },
+            { name: "น้ำขึ้นให้รีบตัก", hint: "เมื่อมีโอกาสดีผ่านเข้ามา ควรรีบคว้าไว้และทำให้เต็มที่" },
+            { name: "ปลาหมอตายเพราะปาก", hint: "คนที่ได้รับอันตรายหรือความเดือดร้อนเพราะคำพูดของตัวเอง" },
+            { name: "วัวหายล้อมคอก", hint: "คิดหาทางป้องกันหลังจากที่ความเสียหายเกิดขึ้นไปแล้ว" },
+            { name: "นกสองหัว", hint: "คนทีทำตัวเข้ากับทั้งสองฝ่ายที่ขัดแย้งกันเพื่อหวังประโยชน์" },
+            { name: "จับปลาสองมือ", hint: "คนที่มุ่งหวังจะทำสองอย่างพร้อมกันจนสุดท้ายไม่สำเร็จสักอย่าง" },
+            { name: "ช้างตายทั้งตัวเอาใบบัวปิด", hint: "ความผิดร้ายแรงที่รู้กันทั่วแล้ว จะปกปิดอย่างไรก็ไม่มิด" },
+            { name: "ปากว่าตาขยิบ", hint: "พูดอย่างหนึ่งแต่ทำอีกอย่างหนึ่ง ไม่ตรงตามที่พูดไว้" },
+            { name: "สี่ตีนยังรู้พลาด นักปราชญ์ยังรู้พลั้ง", hint: "ทุกคนย่อมทำความผิดพลาดกันได้ แม้จะเป็นผู้ที่มีความรู้เก่งกาจ" }
         ];
 
         let groups = [
-            { name: "ทีมมังกรไฟ", score: 0, color: "bg-rose-500" },
-            { name: "ทีมสายฟ้า", score: 0, color: "bg-sky-500" },
-            { name: "ทีมพยัคฆ์", score: 0, color: "bg-emerald-500" }
+            { name: "ทีมสายฟ้า", score: 0, color: "bg-blue-500" },
+            { name: "ทีมเพลิงนิล", score: 0, color: "bg-rose-500" },
+            { name: "ทีมพยัคฆ์ขาว", score: 0, color: "bg-emerald-500" }
         ];
 
-        let gameMode = 'single', activeGroupIdx = null, currentQ = 0, score = 0, timer = null, timeLeft = 60;
-        let quizPool = [];
+        let gameMode = 'single', activeGroupIdx = null, currentQ = 0, score = 0, timer = null, timeLeft = 60, quizPool = [];
 
         function switchTab(id) {
             document.querySelectorAll('.stage-content').forEach(s => s.classList.remove('active'));
@@ -175,9 +178,8 @@
 
         function initGame(mode) {
             gameMode = mode;
-            currentQ = 0;
-            score = 0;
-            quizPool = [...idioms].sort(() => Math.random() - 0.5).slice(0, 10);
+            currentQ = 0; score = 0;
+            quizPool = [...idiomsLibrary].sort(() => Math.random() - 0.5).slice(0, 10);
             document.getElementById('bottom-nav').style.display = 'none';
             if(mode === 'team') showTeamSelect(); else startQuiz();
         }
@@ -188,7 +190,7 @@
             groups.forEach((g, i) => {
                 const btn = document.createElement('button');
                 btn.className = `${g.color} text-white p-8 rounded-[32px] font-black shadow-xl hover:scale-105 transition-all text-xl border-4 border-white/20`;
-                btn.innerHTML = `${g.name}<br><span class="text-sm opacity-80">${g.score} Pts</span>`;
+                btn.innerHTML = `${g.name}<br><span class="text-sm opacity-80">${g.score} คะแนน</span>`;
                 btn.onclick = () => { activeGroupIdx = i; startQuiz(); };
                 grid.appendChild(btn);
             });
@@ -199,19 +201,20 @@
             if(currentQ >= 10) { endShow(); return; }
             const q = quizPool[currentQ];
             document.getElementById('q-counter').innerText = `ข้อที่ ${currentQ + 1}/10`;
-            document.getElementById('q-emoji').innerText = q.emoji;
+            document.getElementById('q-text').innerText = q.hint;
             
             const playerInd = document.getElementById('current-player');
             if(gameMode === 'team') {
-                playerInd.innerText = `คิวตอบ: ${groups[activeGroupIdx].name}`;
-                playerInd.className = `mt-4 inline-block px-4 py-1 rounded-full text-xs font-bold uppercase ${groups[activeGroupIdx].color} text-white`;
+                playerInd.innerText = `ผู้ตอบ: ${groups[activeGroupIdx].name}`;
+                playerInd.className = `absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full text-sm font-bold shadow-lg ${groups[activeGroupIdx].color} text-white`;
             } else {
-                playerInd.innerText = '';
+                playerInd.innerText = 'โหมดเล่นคนเดียว';
+                playerInd.className = `absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full text-sm font-bold shadow-lg bg-indigo-600 text-white`;
             }
 
-            // Options logic
+            // Create 4 Options (1 correct, 3 wrong)
             let options = [q.name];
-            let others = idioms.filter(i => i.name !== q.name).sort(() => Math.random() - 0.5);
+            let others = idiomsLibrary.filter(i => i.name !== q.name).sort(() => Math.random() - 0.5);
             options.push(...others.slice(0, 3).map(i => i.name));
             options.sort(() => Math.random() - 0.5);
 
@@ -221,15 +224,15 @@
                 const btn = document.createElement('button');
                 btn.className = `choice-btn choice-${i}`;
                 btn.innerText = opt;
-                btn.onclick = () => check(opt, q.name);
+                btn.onclick = () => checkAnswer(opt, q.name);
                 container.appendChild(btn);
             });
 
             switchTab('quiz');
-            startT();
+            startTimer();
         }
 
-        function startT() {
+        function startTimer() {
             clearInterval(timer);
             timeLeft = 60;
             const bar = document.getElementById('timer-bar');
@@ -238,11 +241,11 @@
                 timeLeft -= 0.1;
                 txt.innerText = Math.ceil(timeLeft);
                 bar.style.width = (timeLeft/60*100) + "%";
-                if(timeLeft <= 0) check(null, quizPool[currentQ].name);
+                if(timeLeft <= 0) checkAnswer(null, quizPool[currentQ].name);
             }, 100);
         }
 
-        function check(sel, cor) {
+        function checkAnswer(sel, cor) {
             clearInterval(timer);
             const btns = document.querySelectorAll('.choice-btn');
             btns.forEach(b => {
@@ -259,14 +262,14 @@
             if(sel === cor) {
                 const pts = Math.ceil(timeLeft);
                 if(gameMode === 'team') groups[activeGroupIdx].score += pts; else score += pts;
-                confetti({ particleCount: 40, spread: 70, origin: { y: 0.8 } });
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 } });
             }
 
             currentQ++;
             setTimeout(() => {
                 if(gameMode === 'team' && currentQ < 10) showTeamSelect();
                 else startQuiz();
-                updateHeader();
+                updateScoreHeader();
             }, 1500);
         }
 
@@ -275,29 +278,32 @@
             const wrap = document.getElementById('podium-wrap');
             wrap.innerHTML = '';
 
+            // Calculate Rankings (Handle ties)
             let sorted = [...groups].sort((a,b) => b.score - a.score);
-            let rankArr = [];
             let currentRank = 1;
-            
             sorted.forEach((team, i) => {
                 if(i > 0 && team.score < sorted[i-1].score) currentRank = i + 1;
                 team.rank = currentRank;
             });
 
-            // Re-order for podium visual: 2, 1, 3
+            // Display in 2nd, 1st, 3rd position
             const p1 = sorted.filter(t => t.rank === 1);
             const p2 = sorted.filter(t => t.rank === 2);
             const p3 = sorted.filter(t => t.rank === 3);
             
             [...p2, ...p1, ...p3].forEach(team => {
                 const col = document.createElement('div');
-                col.className = "podium-item flex flex-col items-center justify-end flex-1";
-                let h = team.rank === 1 ? "180px" : (team.rank === 2 ? "120px" : "80px");
+                col.className = "podium-item flex flex-col items-center justify-end flex-1 max-w-[150px]";
+                let h = "0px";
+                if(team.rank === 1) h = "180px";
+                else if(team.rank === 2) h = "120px";
+                else if(team.rank === 3) h = "80px";
+
                 col.innerHTML = `
-                    <div class="mb-3 text-center w-full relative">
+                    <div class="mb-4 text-center w-full relative">
                         ${team.rank === 1 ? '<div class="crown-animate text-5xl mb-2">👑</div>' : ''}
                         <div class="font-black text-indigo-900 text-sm truncate px-1">${team.name}</div>
-                        <div class="text-indigo-600 font-bold">${team.score}</div>
+                        <div class="text-indigo-600 font-bold bg-white/50 rounded-lg px-2 py-1 inline-block mt-1">${team.score}</div>
                     </div>
                     <div class="podium-base rank-${team.rank}" style="height: ${h}">
                         <span class="text-4xl italic">${team.rank}</span>
@@ -306,21 +312,20 @@
                 wrap.appendChild(col);
             });
 
-            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+            confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
         }
 
-        function updateHeader() {
+        function updateScoreHeader() {
             const h = document.getElementById('header-scores');
             h.innerHTML = '';
             [...groups].sort((a,b) => b.score - a.score).forEach(g => {
                 const badge = document.createElement('div');
-                badge.className = `${g.color} text-white px-3 py-1 rounded-xl text-[10px] font-black flex items-center gap-2 shadow-sm`;
+                badge.className = `${g.color} text-white px-3 py-1.5 rounded-xl text-[10px] font-black flex items-center gap-2 shadow-sm border border-white/20`;
                 badge.innerHTML = `<span>${g.name}</span><span class="bg-black/20 px-2 rounded-lg">${g.score}</span>`;
                 h.appendChild(badge);
             });
         }
 
-        // Modal Teams
         function openManageTeams() {
             document.getElementById('team-modal').classList.remove('hidden');
             renderModalTeams();
@@ -330,23 +335,23 @@
             const list = document.getElementById('modal-teams-list');
             list.innerHTML = '';
             groups.forEach((g, i) => {
-                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-                    <span class="font-bold">${g.name}</span>
-                    <button onclick="removeTeam(${i})" class="text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <span class="font-bold text-indigo-900">${g.name}</span>
+                    <button onclick="removeTeam(${i})" class="text-rose-500 hover:scale-110 transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 </div>`;
             });
             lucide.createIcons();
         }
         function addNewTeam() {
             const inp = document.getElementById('add-team-input');
-            if(!inp.value) return;
-            const colors = ['bg-rose-500', 'bg-sky-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-fuchsia-500'];
-            groups.push({ name: inp.value, score: 0, color: colors[groups.length % colors.length] });
-            inp.value = ''; renderModalTeams(); updateHeader();
+            if(!inp.value.trim()) return;
+            const colors = ['bg-blue-500', 'bg-rose-500', 'bg-emerald-500', 'bg-amber-500', 'bg-indigo-500', 'bg-fuchsia-500'];
+            groups.push({ name: inp.value.trim(), score: 0, color: colors[groups.length % colors.length] });
+            inp.value = ''; renderModalTeams(); updateScoreHeader();
         }
-        function removeTeam(i) { if(groups.length > 1) { groups.splice(i, 1); renderModalTeams(); updateHeader(); } }
+        function removeTeam(i) { if(groups.length > 1) { groups.splice(i, 1); renderModalTeams(); updateScoreHeader(); } }
 
-        window.onload = () => { lucide.createIcons(); updateHeader(); };
+        window.onload = () => { lucide.createIcons(); updateScoreHeader(); };
     </script>
 </body>
 </html>
